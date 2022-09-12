@@ -1,5 +1,7 @@
 #include "my_math.h"
 
+// vec2f
+
 vec2f operator+(vec2f a, vec2f b) {
 	vec2f result;
 	result.x = a.x + b.x;
@@ -48,6 +50,8 @@ vec2f operator/(vec2f v, float f) {
 	result.y = v.y / f;
 	return result;
 }
+
+// vec3f
 
 vec3f operator+(vec3f a, vec3f b) {
 	vec3f result;
@@ -104,6 +108,8 @@ vec3f operator/(vec3f v, float f) {
 	result.z = v.z / f;
 	return result;
 }
+
+// vec4f
 
 vec4f operator+(vec4f a, vec4f b) {
 	vec4f result;

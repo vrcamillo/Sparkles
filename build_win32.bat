@@ -86,9 +86,14 @@ if not exist !glfw_library! (
 	
 	for %%f in (!glfw_source_files!) do ( 
  	  cl /O2 /nologo /c /D"_GLFW_WIN32" %%f /Fo"!glfw_build_folder!\%%~nf.obj"
+ 	  if errorlevel 1 (
+			echo:
+			echo Compilation error! Stopping...
+			exit /b
+		)
 	)
 
-	lib /nologo /out:!glfw_library! !glfw_build_folder!\*.obj	
+	lib /nologo /out:!glfw_library! !glfw_build_folder!\*.obj
 )
 
 if exist !glfw_library! (
@@ -128,6 +133,11 @@ if not exist !imgui_library! (
 	
 	for %%f in (!imgui_source_files!) do ( 
  	  cl /nologo /c /O2 /I"code" /I!imgui_folder! /I!glfw_folder!/include /D IMGUI_USER_CONFIG=\"my_imgui_config.h\" %%f /Fo"!imgui_build_folder!\%%~nf.obj"
+		if errorlevel 1 (
+			echo:
+			echo Compilation error! Stopping...
+			exit /b
+		)
 	)
 
 	lib /nologo /out:!imgui_library! !imgui_build_folder!\*.obj	
@@ -152,9 +162,10 @@ rem
 
 set includes=!includes! /I"code"
 
-set source_files=!source_files! code/main.cpp
-set source_files=!source_files! code/sparkles.cpp
-set source_files=!source_files! code/math.cpp
+rem Add all cpp files from 'code' 
+for /r %%f in (code\*.cpp) do (
+	set source_files=!source_files! %%f
+)
 
 if exist !executable_build_folder! (
 	del /S /Q !executable_build_folder!\* 1>nul
@@ -164,6 +175,9 @@ if exist !executable_build_folder! (
 
 for %%f in (!source_files!) do (
 	cl /c /nologo !includes! !defines! %%f /Fo"!executable_build_folder!\%%~nf.obj"
+	if errorlevel 1 (
+		exit /b
+	)
 )
 
 link /nologo !executable_build_folder!\*.obj !libraries! /out:!executable!

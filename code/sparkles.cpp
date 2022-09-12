@@ -14,7 +14,7 @@ enum class CoordinateSystem {
 enum class ColorSystem {
 	RGB,
 	HSV,
-}
+};
 
 struct RandomScalar {
 	Distribution type = Distribution::UNIFORM;
@@ -29,12 +29,12 @@ struct RandomVec2 {
 		struct {
 			RandomScalar x;
 			RandomScalar y;
-		}
+		};
 		struct {
 			RandomScalar angle;
 			RandomScalar radius;
-		}
-	}
+		};
+	};
 };
 
 struct RandomColor {
@@ -45,15 +45,16 @@ struct RandomColor {
 			RandomScalar red;
 			RandomScalar green;
 			RandomScalar blue;
-		}
+		};
 		struct {
 			RandomScalar hue;
 			RandomScalar saturation;
 			RandomScalar brightness;
-		}
-	}
+		};
+	};
+	
 	RandomScalar alpha;
-}
+};
 
 struct ParticleSpawnParams {
 	RandomVec2 position;
@@ -66,7 +67,6 @@ struct ParticlePhysicsParams {
 	vec2f gravity;
 	vec2f friction;
 };
-
 
 void initialize() {
 	

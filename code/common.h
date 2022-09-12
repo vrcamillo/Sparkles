@@ -5,6 +5,6 @@
 #include "glad/gl.h"
 #include "GLFW/glfw3.h"
 
-#include "math.h"
+#include "my_math.h"
 
 extern GLFWwindow* global_window;

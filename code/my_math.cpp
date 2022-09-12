@@ -1,4 +1,4 @@
-#include "math.h"
+#include "my_math.h"
 
 vec2f operator+(vec2f a, vec2f b) {
 	vec2f result;

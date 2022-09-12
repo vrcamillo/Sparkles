@@ -13,10 +13,24 @@ GLFWwindow* global_window;
 void initialize();
 void do_frame();
 
-int main() {	
-	// Create GLFW window.
+int main() {
 	if (!glfwInit()) return 1;
-	global_window = glfwCreateWindow(720, 480, "Sparkles!", nullptr, nullptr);
+	
+	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+	const GLFWvidmode* vidmode = glfwGetVideoMode(monitor);
+	
+	int window_width = (int) (vidmode->width * 3) / 4;
+	int window_height = (int) (vidmode->height * 3) / 4;
+	
+	global_window = glfwCreateWindow(window_width, window_height, "Sparkles!", nullptr, nullptr);
+	
+	{
+		// Centralize window.
+		int x = (vidmode->width - window_width) / 2;
+		int y = (vidmode->height - window_height) / 2;
+		glfwSetWindowPos(global_window, x, y);
+	}
+	
 	glfwMakeContextCurrent(global_window);
 	glfwSwapInterval(1); // v-sync on
 	

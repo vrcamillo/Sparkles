@@ -35,7 +35,7 @@ rem These variables are going to be filled below.
 set source_files=
 set includes=
 set defines=
-set libraries= kernel32.lib shell32.lib user32.lib gdi32.lib
+set libraries= kernel32.lib shell32.lib user32.lib gdi32.lib Winmm.lib
 
 rem Check if CL exists
 where /q cl

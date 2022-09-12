@@ -9,6 +9,7 @@
 #include "backends/imgui_impl_opengl3.h"
 
 GLFWwindow* global_window;
+TimeInfo global_time;
 
 void initialize();
 void do_frame();
@@ -52,9 +53,18 @@ int main() {
 		ImGui_ImplOpenGL3_Init("#version 130");
 	}
 	
+	// Initialize time global variable.
+	global_time.min_dt = 1.0f / vidmode->refreshRate; // Use the current monitor as reference.
+	global_time.max_dt = 1.0f; // #hardcoded to 1 second.
+	global_time.dt = 0.0f;
+	
 	initialize(); // Actual initialization function
 	
 	while (!glfwWindowShouldClose(global_window)) {
+		double frame_start_time = glfwGetTime();
+		
+		glfwPollEvents();
+		
 		{
 			// ImGui pre frame stuff
 			ImGui_ImplOpenGL3_NewFrame();
@@ -70,13 +80,27 @@ int main() {
 			int display_w, display_h;
 			glfwGetFramebufferSize(global_window, &display_w, &display_h);
 			glViewport(0, 0, display_w, display_h);
-			glClearColor(0, 0, 0, 1);
-			glClear(GL_COLOR_BUFFER_BIT);
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 		}
 		
 		glfwSwapBuffers(global_window);
-		glfwPollEvents();
+		
+		double frame_end_time = glfwGetTime();
+		float frame_dt = (float) (frame_end_time - frame_start_time);
+		
+		if (frame_dt < global_time.min_dt) {
+			float seconds_to_sleep = global_time.min_dt - frame_dt;
+			int ms_to_sleep = (int) (seconds_to_sleep * 1000);
+			system_sleep_ms(ms_to_sleep);
+			
+			frame_dt = global_time.min_dt;
+		} 
+		
+		if (frame_dt > global_time.max_dt) {
+			frame_dt = global_time.max_dt;
+		}
+		
+		global_time.dt = frame_dt;
 	}
 	
 	// Shutdown ImGui

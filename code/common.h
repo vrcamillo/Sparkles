@@ -5,6 +5,7 @@
 
 #include "glad/gl.h"
 #include "GLFW/glfw3.h"
+#include "imgui.h"
 
 #include "my_math.h"
 
@@ -18,4 +19,7 @@ struct TimeInfo {
 
 extern GLFWwindow* global_window;
 extern TimeInfo global_time;
+
+extern unsigned int default_font_data_size;
+extern unsigned int default_font_data[115744/4];
 

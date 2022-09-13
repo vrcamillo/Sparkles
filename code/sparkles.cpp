@@ -6,9 +6,18 @@ enum class Distribution {
 	UNIFORM, // Every value in the sample has the same chance of being chosen.
 };
 
+const char* distribution_names[] = {
+	"Uniform",
+};
+
 enum class CoordinateSystem {
 	RECTANGULAR,
 	POLAR,
+};
+
+const char* coordinate_system_names[] = {
+	"Rectangular",
+	"Polar",
 };
 
 enum class ColorSystem {
@@ -16,8 +25,13 @@ enum class ColorSystem {
 	HSV,
 };
 
+const char* color_system_names[] = {
+	"RGB",
+	"HSV",
+};
+
 struct RandomScalar {
-	Distribution type;
+	Distribution distribution;
 	float min;
 	float max;
 };
@@ -111,7 +125,7 @@ void initialize() {
 		.coordinate_system = CoordinateSystem::RECTANGULAR,
 		.x = {Distribution::UNIFORM, 0, 0},
 		.y = {Distribution::UNIFORM, 1, 2},
-	};	
+	};
 	params.spawn.life = {Distribution::UNIFORM, 1, 3};
 	params.spawn.color = {
 		.color_system = ColorSystem::RGB,
@@ -124,6 +138,40 @@ void initialize() {
 	particle_system_initialize(&the_system, 1000, &params);
 }
 
+void do_random_scalar(const char* label, RandomScalar* scalar, float min, float max) {  
+	ImGui::Text(label);
+	// if (ImGui::TreeNode(label)) {
+	ImGui::Indent();
+	ImGui::Combo("Distribution", (int*) &scalar->distribution, distribution_names, IM_ARRAYSIZE(distribution_names));
+	
+	ImGui::InputFloat("Min value", &scalar->min, min, max);
+	ImGui::InputFloat("Max value", &scalar->max, min, max);
+	ImGui::Unindent();
+	ImGui::Separator();
+	
+		//ImGui::TreePop();
+	//}
+}
+
+void do_side_panel() {
+	int screen_w, screen_h;
+	glfwGetFramebufferSize(global_window, &screen_w, &screen_h);
+	
+	ImGui::SetNextWindowPos({0, 0});
+	ImGui::SetNextWindowSize({screen_w * 0.25f, (float) screen_h});
+	ImGui::Begin("Particle Parameters", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+	
+	do_random_scalar("Life", &the_system.params.spawn.life, 0, 10);
+	
+	ImGui::End();
+}
+
 void do_frame() {
+	
+	glClearColor(0, 0, 0, 1);
+	glClear(GL_COLOR_BUFFER_BIT);
+	
+	do_side_panel();
+	
 	
 }

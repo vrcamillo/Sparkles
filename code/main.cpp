@@ -46,6 +46,9 @@ int main() {
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO();
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+		io.IniFilename = nullptr; // Remove annoying ini file.
+		io.Fonts->AddFontFromMemoryCompressedTTF(default_font_data, default_font_data_size, 16.0f); // Remove ugly default imgui font.
 		
 		ImGui::StyleColorsDark();
 		

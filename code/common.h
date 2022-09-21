@@ -9,6 +9,8 @@
 
 #include "my_math.h"
 
+#define array_size(array) sizeof(array) / sizeof((array)[0])
+
 void system_sleep_ms(int milliseconds);
 
 struct TimeInfo {

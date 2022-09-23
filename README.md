@@ -1,4 +1,4 @@
-# Sparkles
+# Sparkles!
 A particle system demo written in C++ and OpenGL.
 
 ## Roadmap

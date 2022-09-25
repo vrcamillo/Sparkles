@@ -5,6 +5,10 @@
 
 #include "common.h"
 
+// #random_number_cleanup
+#include <stdlib.h> // srand
+#include <time.h> // time
+
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 
@@ -15,6 +19,12 @@ void initialize();
 void do_frame();
 
 int main() {
+	
+	// Initialize random number generator seed to the current time, so that every time we run the program we get different results.
+	// Eventually we will want to be very careful about random numbers, but for the mean time, we just use c standard lib.
+	// #random_number_cleanup
+	srand(time(NULL));
+	
 	if (!glfwInit()) return 1;
 	
 	GLFWmonitor* monitor = glfwGetPrimaryMonitor();

@@ -15,7 +15,7 @@
 GLFWwindow* global_window;
 TimeInfo global_time;
 
-void initialize();
+bool initialize();
 void do_frame();
 
 int main() {
@@ -71,7 +71,8 @@ int main() {
 	global_time.max_dt = 1.0f; // #hardcoded to 1 second.
 	global_time.dt = 0.0f;
 	
-	initialize(); // Actual initialization function
+	bool initialized = initialize(); // Actual initialization function
+	if (!initialized) return 1;
 	
 	while (!glfwWindowShouldClose(global_window)) {
 		double frame_start_time = glfwGetTime();

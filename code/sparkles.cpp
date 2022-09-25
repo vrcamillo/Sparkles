@@ -4,8 +4,37 @@
 #include <cstdlib> // RAND_MAX
 #include <stdlib.h> // rand
 
-
 // #todo: It would be nice to have a nice visualization for distributions and coordinate systems.
+
+const char* default_vertex_shader_source = R"glsl(
+#version 330 core
+
+layout (location = 0) in vec3 vertex_position;
+layout (location = 2) in vec4 vertex_color;
+layout (location = 3) in vec2 vertex_uv;
+layout (location = 4) in vec3 instance_position;
+layout (location = 5) in vec4 instance_scale;
+layout (location = 6) in vec2 instance_color;
+
+out vec4 pixel_color;
+
+void main() {
+	gl_Position = vec4(vertex_position + instance_position, 1);
+	pixel_color = vertex_color * instance_color;
+}  
+)glsl";
+
+const char* default_fragment_shader_source = R"glsl(
+#version 330 core
+
+in vec4 pixel_color;
+out vec4 result_color; 
+
+void main() {
+	result_color = pixel_color;
+}
+
+)glsl";
 
 enum class Distribution {
 	UNIFORM, // Every value in the sample has the same chance of being chosen.
@@ -154,6 +183,8 @@ struct Particle {
 	float life;
 };
 
+#define MAX_MESHES_PER_SYSTEM 16;
+
 struct ParticleSystem {
 	ParticleParams params;
 	uint32_t count;
@@ -163,13 +194,15 @@ struct ParticleSystem {
 };
 
 struct Mesh {
-	GLuint vbo;
-	GLuint ibo;
+	GLuint vbo; // Vertex buffer object
+	GLuint ibo; // Index buffer object
 };
 
 ParticleSystem the_system;
 
 Mesh square_mesh;
+GLuint default_shader_program;
+GLuint default_vao;
 
 union Vertex {
 	struct {
@@ -224,7 +257,14 @@ void particle_system_update(ParticleSystem* system) {
 }
 
 void particle_system_render(ParticleSystem* system, Mesh mesh) {
+	glUseProgram(default_shader_program);
+	glBindVertexArray(default_vao);
 	
+	glBindVertexBuffer(0, mesh.vbo, 0, sizeof(Vertex));
+	glBindVertexBuffer(1, system->instance_vbo, 0, sizeof(Particle));
+	
+	glBindVertexArray(0);
+	glUseProgram(0);
 }
 
 Mesh mesh_create(uint32_t vertex_count, Vertex vertices[], uint32_t index_count, uint32_t indices[]) { 
@@ -239,13 +279,100 @@ Mesh mesh_create(uint32_t vertex_count, Vertex vertices[], uint32_t index_count,
 	
 	GLuint ibo;
 	glGenBuffers(1, &ibo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, indices, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	
 	return {vbo, ibo};
 }
 
-void initialize() {
+GLuint shader_pipeline_create(const char* glsl_vertex_shader_source, const char* glsl_fragment_shader_source) {
+	GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertex_shader, 1, &glsl_vertex_shader_source, nullptr);
+	glCompileShader(vertex_shader);
+	
+	int vertex_shader_compiled;
+	glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &vertex_shader_compiled);
+	if (!vertex_shader_compiled) {
+		char message[512];
+		glGetShaderInfoLog(vertex_shader, sizeof(message), nullptr, message);
+		printf("Failed to compile vertex shader:\n%s\n", message);
+		return {}; // #leak: Vertex shader leaks here.
+	}
+	
+	GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragment_shader, 1, &glsl_fragment_shader_source, nullptr);
+	glCompileShader(fragment_shader);
+	
+	int fragment_shader_compiled = 0;
+	glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &fragment_shader_compiled);
+	if (!fragment_shader_compiled) {
+		char message[512];
+		glGetShaderInfoLog(fragment_shader, sizeof(message), nullptr, message);
+		printf("Failed to compile fragment shader:\n%s\n", message);
+		return {}; // #leak: Vertex and fragment shaders leak here.
+	}
+	
+	GLuint program = glCreateProgram();
+	glAttachShader(program, vertex_shader);
+	glAttachShader(program, fragment_shader);
+	glLinkProgram(program);
+	
+	int program_linked = 0;
+	glGetProgramiv(program, GL_LINK_STATUS, &program_linked);
+	if (!program_linked) {
+		char message[512];
+		glGetProgramInfoLog(program, sizeof(message), nullptr, message);
+		printf("Failed to link vertex and fragment shaders:\n%s\n", message);
+		return {}; // #leak: Vertex shader, fragment shader, and program leak here.
+	}
+	
+	// From OpenGL docs (https://registry.khronos.org/OpenGL-Refpages/gl4/html/glDeleteShader.xhtml):
+	//     "If a shader object to be deleted is attached to a program object, it will be flagged for deletion, 
+	//      but it will not be deleted until it is no longer attached to any program object, for any rendering context
+	//      (i.e., it must be detached from wherever it was attached before it will be deleted)."
+	glDeleteShader(vertex_shader);
+	glDeleteShader(fragment_shader);
+	
+	return program;
+}
+
+bool initialize() {
+	
+	{
+		// Create default shader program
+		default_shader_program = shader_pipeline_create(default_vertex_shader_source, default_fragment_shader_source);
+		if (!default_shader_program) return false;
+	}
+	
+	{
+		// Create default VAO.
+		glGenVertexArrays(1, &default_vao);
+		glBindVertexArray(default_vao);
+		
+		glEnableVertexAttribArray(0);  
+		glEnableVertexAttribArray(1);  
+		glEnableVertexAttribArray(2);  
+		
+		// Vertex data 
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, position));
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, color));
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, uv));
+		glVertexAttribBinding(0, 0);
+		glVertexAttribBinding(1, 0);
+		glVertexAttribBinding(2, 0);
+		
+		// Instance data
+		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*) offsetof(Particle, position));
+		glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*) offsetof(Particle, scale));
+		glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*) offsetof(Particle, color));
+		glVertexAttribBinding(3, 1);
+		glVertexAttribBinding(4, 1);
+		glVertexAttribBinding(5, 1);
+		
+		glBindVertexArray(0);
+	}
+	
 	
 	{
 		// Create mesh presets.
@@ -292,6 +419,8 @@ void initialize() {
 	params.spawn.scale = {Distribution::UNIFORM, 1, 1};
 	
 	particle_system_initialize(&the_system, 1000, &params);
+	
+	return true;
 }
 
 void do_random_scalar(const char* label, RandomScalar* scalar, float min, float max) {  

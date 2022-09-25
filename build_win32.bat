@@ -174,13 +174,13 @@ if exist !executable_build_folder! (
 )
 
 for %%f in (!source_files!) do (
-	cl /c /nologo /std:c++20 !includes! !defines! %%f /Fo"!executable_build_folder!\%%~nf.obj"
+	cl /c /nologo /std:c++20 /Zi !includes! !defines! %%f /Fo"!executable_build_folder!\%%~nf.obj"
 	if errorlevel 1 (
 		exit /b
 	)
 )
 
-link /nologo !executable_build_folder!\*.obj !libraries! /out:!executable!
+link /nologo /DEBUG !executable_build_folder!\*.obj !libraries! /out:!executable!
 
 echo:
 if errorlevel 0 (

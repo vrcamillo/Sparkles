@@ -51,6 +51,36 @@ vec2f operator/(vec2f v, float f) {
 	return result;
 }
 
+void operator+=(vec2f& a, vec2f b) {
+	a.x += b.x;
+	a.y += b.y;
+}
+
+void operator-=(vec2f& a, vec2f b) {
+	a.x -= b.x;
+	a.y -= b.y;
+}
+
+void operator*=(vec2f& a, vec2f b) {
+	a.x *= b.x;
+	a.y *= b.y;
+}
+
+void operator/=(vec2f& a, vec2f b) {
+	a.x /= b.x;
+	a.y /= b.y;
+}
+
+void operator*=(vec2f& v, float f) {
+	v.x *= f;
+	v.y *= f;
+}
+
+void operator/=(vec2f& v, float f) {
+	v.x /= f;
+	v.y /= f;
+}
+
 // vec3f
 
 vec3f operator+(vec3f a, vec3f b) {
@@ -107,6 +137,42 @@ vec3f operator/(vec3f v, float f) {
 	result.y = v.y / f;
 	result.z = v.z / f;
 	return result;
+}
+
+void operator+=(vec3f& a, vec3f b) {
+	a.x += b.x;
+	a.y += b.y;
+	a.z += b.z;
+}
+
+void operator-=(vec3f& a, vec3f b) {
+	a.x -= b.x;
+	a.y -= b.y;
+	a.z -= b.z;
+}
+
+void operator*=(vec3f& a, vec3f b) {
+	a.x *= b.x;
+	a.y *= b.y;
+	a.z *= b.z;
+}
+
+void operator/=(vec3f& a, vec3f b) {
+	a.x /= b.x;
+	a.y /= b.y;
+	a.z /= b.z;
+}
+
+void operator*=(vec3f& v, float f) {
+	v.x *= f;
+	v.y *= f;
+	v.z *= f;
+}
+
+void operator/=(vec3f& v, float f) {
+	v.x /= f;
+	v.y /= f;
+	v.z /= f;
 }
 
 // vec4f
@@ -172,4 +238,46 @@ vec4f operator/(vec4f v, float f) {
 	result.z = v.z / f;
 	result.w = v.w / f;
 	return result;
+}
+
+void operator+=(vec4f& a, vec4f b) {
+	a.x += b.x;
+	a.y += b.y;
+	a.z += b.z;
+	a.w += b.w;
+}
+
+void operator-=(vec4f& a, vec4f b) {
+	a.x -= b.x;
+	a.y -= b.y;
+	a.z -= b.z;
+	a.w -= b.w;
+}
+
+void operator*=(vec4f& a, vec4f b) {
+	a.x *= b.x;
+	a.y *= b.y;
+	a.z *= b.z;
+	a.w *= b.w;
+}
+
+void operator/=(vec4f& a, vec4f b) {
+	a.x /= b.x;
+	a.y /= b.y;
+	a.z /= b.z;
+	a.w /= b.w;
+}
+
+void operator*=(vec4f& v, float f) {
+	v.x *= f;
+	v.y *= f;
+	v.z *= f;
+	v.w *= f;
+}
+
+void operator/=(vec4f& v, float f) {
+	v.x /= f;
+	v.y /= f;
+	v.z /= f;
+	v.w /= f;
 }

@@ -107,7 +107,7 @@ struct RandomColor {
 
 struct ParticleParams {
 	struct {
-		vec2f gravity;
+		vec3f gravity;
 		float friction;	
 	} physics;
 	
@@ -180,7 +180,7 @@ struct Particle {
 	vec3f position;
 	float scale;
 	vec4f color;
-	vec2f velocity;
+	vec3f velocity;
 	float life;
 };
 
@@ -238,10 +238,11 @@ void particle_system_initialize(ParticleSystem* system, uint32_t particle_count,
 		Particle* p = &system->particles[i];
 		p->position.xy = random_get(system->params.spawn.position);
 		p->position.z = 0;
-		// p->velocity = random_get(system->params.spawn.velocity);
 		p->scale = random_get(system->params.spawn.scale);
-		// p->life     = random_get(system->params.spawn.life);
 		p->color    = random_get(system->params.spawn.color);
+		p->velocity.xy = random_get(system->params.spawn.velocity);
+		p->velocity.z = 0;
+		p->life     = random_get(system->params.spawn.life);
 	}
 	
 	uint32_t instance_buffer_size = particle_count * sizeof(Particle);
@@ -256,7 +257,21 @@ void particle_system_initialize(ParticleSystem* system, uint32_t particle_count,
 }
 
 void particle_system_update(ParticleSystem* system) {
-
+	
+	for (int i = 0; i < system->count; i += 1) {
+		Particle* p = &system->particles[i];
+		
+		p->velocity += system->params.physics.gravity * global_time.dt;
+		p->position += p->velocity * global_time.dt;
+	}
+	
+	
+	// Upload instance data to the GPU. 
+	// Because of sync issues, we probably want to use a smarter approach here.
+	uint32_t instance_buffer_size = system->count * sizeof(Particle);
+	glBindBuffer(GL_ARRAY_BUFFER, system->instance_vbo);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, instance_buffer_size, system->particles);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void particle_system_render(ParticleSystem* system, Mesh mesh) {
@@ -412,7 +427,7 @@ bool initialize() {
 	
 	ParticleParams params = {};
 	
-	params.physics.gravity = {0, +1};
+	params.physics.gravity = {0, -1};
 	params.physics.friction = 0.9f;
 	
 	params.spawn.position = {
@@ -422,7 +437,7 @@ bool initialize() {
 	};
 	params.spawn.velocity = {
 		.coordinate_system = CoordinateSystem::RECTANGULAR,
-		.x = {Distribution::UNIFORM, 0, 0},
+		.x = {Distribution::UNIFORM, -1, +1},
 		.y = {Distribution::UNIFORM, 1, 2},
 	};
 	params.spawn.life = {Distribution::UNIFORM, 1, 3};

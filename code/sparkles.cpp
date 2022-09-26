@@ -10,16 +10,17 @@ const char* default_vertex_shader_source = R"glsl(
 #version 330 core
 
 layout (location = 0) in vec3 vertex_position;
-layout (location = 2) in vec4 vertex_color;
-layout (location = 3) in vec2 vertex_uv;
-layout (location = 4) in vec3 instance_position;
-layout (location = 5) in vec4 instance_scale;
-layout (location = 6) in vec2 instance_color;
+layout (location = 1) in vec4 vertex_color;
+layout (location = 2) in vec2 vertex_uv;
+
+layout (location = 3) in vec3 instance_position;
+layout (location = 4) in float instance_scale;
+layout (location = 5) in vec4 instance_color;
 
 out vec4 pixel_color;
 
 void main() {
-	gl_Position = vec4(vertex_position + instance_position, 1);
+	gl_Position = vec4(instance_position + vertex_position * instance_scale, 1);
 	pixel_color = vertex_color * instance_color;
 }  
 )glsl";
@@ -176,7 +177,7 @@ vec4f random_get(RandomColor spec) {
 }
 
 struct Particle {
-	vec2f position;
+	vec3f position;
 	float scale;
 	vec4f color;
 	vec2f velocity;
@@ -196,6 +197,7 @@ struct ParticleSystem {
 struct Mesh {
 	GLuint vbo; // Vertex buffer object
 	GLuint ibo; // Index buffer object
+	uint32_t index_count;
 };
 
 ParticleSystem the_system;
@@ -234,10 +236,11 @@ void particle_system_initialize(ParticleSystem* system, uint32_t particle_count,
 	
 	for (int i = 0; i < system->count; i += 1) {
 		Particle* p = &system->particles[i];
-		p->position = random_get(system->params.spawn.position);
-		p->velocity = random_get(system->params.spawn.velocity);
+		p->position.xy = random_get(system->params.spawn.position);
+		p->position.z = 0;
+		// p->velocity = random_get(system->params.spawn.velocity);
 		p->scale = random_get(system->params.spawn.scale);
-		p->life     = random_get(system->params.spawn.life);
+		// p->life     = random_get(system->params.spawn.life);
 		p->color    = random_get(system->params.spawn.color);
 	}
 	
@@ -246,7 +249,7 @@ void particle_system_initialize(ParticleSystem* system, uint32_t particle_count,
 	GLuint vbo;
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, instance_buffer_size, nullptr, GL_STREAM_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, instance_buffer_size, system->particles, GL_STREAM_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	
 	system->instance_vbo = vbo;
@@ -260,8 +263,12 @@ void particle_system_render(ParticleSystem* system, Mesh mesh) {
 	glUseProgram(default_shader_program);
 	glBindVertexArray(default_vao);
 	
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ibo);
+	
 	glBindVertexBuffer(0, mesh.vbo, 0, sizeof(Vertex));
 	glBindVertexBuffer(1, system->instance_vbo, 0, sizeof(Particle));
+	
+	glDrawElementsInstanced(GL_TRIANGLES, mesh.index_count, GL_UNSIGNED_INT, (void*) 0, system->count);
 	
 	glBindVertexArray(0);
 	glUseProgram(0);
@@ -283,7 +290,7 @@ Mesh mesh_create(uint32_t vertex_count, Vertex vertices[], uint32_t index_count,
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, indices, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	
-	return {vbo, ibo};
+	return {vbo, ibo, index_count};
 }
 
 GLuint shader_pipeline_create(const char* glsl_vertex_shader_source, const char* glsl_fragment_shader_source) {
@@ -350,29 +357,40 @@ bool initialize() {
 		glGenVertexArrays(1, &default_vao);
 		glBindVertexArray(default_vao);
 		
-		glEnableVertexAttribArray(0);  
-		glEnableVertexAttribArray(1);  
-		glEnableVertexAttribArray(2);  
-		
-		// Vertex data 
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, position));
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, color));
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, uv));
+		// Vertex position
+		glEnableVertexAttribArray(0);
 		glVertexAttribBinding(0, 0);
+		glVertexAttribFormat(0, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
+		
+		// Vertex color
+		glEnableVertexAttribArray(1);
 		glVertexAttribBinding(1, 0);
+		glVertexAttribFormat(1, 4, GL_FLOAT, GL_FALSE, offsetof(Vertex, color));
+		
+		// Vertex uv
+		glEnableVertexAttribArray(2);
 		glVertexAttribBinding(2, 0);
+		glVertexAttribFormat(2, 2, GL_FLOAT, GL_FALSE, offsetof(Vertex, uv));
 		
-		// Instance data
-		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*) offsetof(Particle, position));
-		glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*) offsetof(Particle, scale));
-		glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*) offsetof(Particle, color));
+		// Particle position
+		glEnableVertexAttribArray(3);
 		glVertexAttribBinding(3, 1);
-		glVertexAttribBinding(4, 1);
-		glVertexAttribBinding(5, 1);
+		glVertexAttribFormat(3, 3, GL_FLOAT, GL_FALSE, offsetof(Particle, position));
 		
+		// Particle scale
+		glEnableVertexAttribArray(4);
+		glVertexAttribBinding(4, 1);
+		glVertexAttribFormat(4, 1, GL_FLOAT, GL_FALSE, offsetof(Particle, scale));
+		
+		// Particle color
+		glEnableVertexAttribArray(5);
+		glVertexAttribBinding(5, 1);
+		glVertexAttribFormat(5, 4, GL_FLOAT, GL_FALSE, offsetof(Particle, color));
+		
+		glVertexBindingDivisor(1, 1);
+
 		glBindVertexArray(0);
 	}
-	
 	
 	{
 		// Create mesh presets.
@@ -416,7 +434,7 @@ bool initialize() {
 		.alpha = {Distribution::UNIFORM, 0.8, 1},
 	};
 	
-	params.spawn.scale = {Distribution::UNIFORM, 1, 1};
+	params.spawn.scale = {Distribution::UNIFORM, 0.01, 0.1};
 	
 	particle_system_initialize(&the_system, 1000, &params);
 	
@@ -452,7 +470,7 @@ void do_frame() {
 	glClear(GL_COLOR_BUFFER_BIT);
 	
 	particle_system_update(&the_system);
-	particle_system_render(&the_system, {});
+	particle_system_render(&the_system, square_mesh);
 	
 // 	do_side_panel();
 }

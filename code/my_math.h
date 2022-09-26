@@ -18,10 +18,13 @@ vec2f operator*(float f, vec2f v);
 
 vec2f operator/(vec2f v, float f);
 
-struct vec3f {
-	float x;
-	float y;
-	float z;
+union vec3f {
+	struct {
+		float x;
+		float y;
+		float z;
+	};
+	vec2f xy;
 };
 
 vec3f operator+(vec3f a, vec3f b);

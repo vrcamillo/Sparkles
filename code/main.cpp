@@ -25,6 +25,8 @@ int main() {
 	// #random_number_cleanup
 	srand(time(NULL));
 	
+	
+	
 	if (!glfwInit()) return 1;
 	
 	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
@@ -33,6 +35,8 @@ int main() {
 	int window_width = (int) (vidmode->width * 3) / 4;
 	int window_height = (int) (vidmode->height * 3) / 4;
 	
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 	global_window = glfwCreateWindow(window_width, window_height, "Sparkles!", nullptr, nullptr);
 	
 	{

@@ -17,10 +17,13 @@ layout (location = 3) in vec3 instance_position;
 layout (location = 4) in float instance_scale;
 layout (location = 5) in vec4 instance_color;
 
+uniform mat4 projection;
+
 out vec4 pixel_color;
 
 void main() {
-	gl_Position = vec4(instance_position + vertex_position * instance_scale, 1);
+	vec4 world_position = vec4(instance_position + vertex_position * instance_scale, 1);
+	gl_Position = projection * world_position;
 	pixel_color = vertex_color * instance_color;
 }  
 )glsl";
@@ -203,8 +206,11 @@ struct Mesh {
 ParticleSystem the_system;
 
 Mesh square_mesh;
+Mesh circle_mesh;
+
 GLuint default_shader_program;
 GLuint default_vao;
+mat4f projection_matrix;
 
 union Vertex {
 	struct {
@@ -277,6 +283,9 @@ void particle_system_update(ParticleSystem* system) {
 void particle_system_render(ParticleSystem* system, Mesh mesh) {
 	glUseProgram(default_shader_program);
 	glBindVertexArray(default_vao);
+	
+	GLuint projection_uniform_loc = glGetUniformLocation(default_shader_program, "projection");
+	glUniformMatrix4fv(projection_uniform_loc, 1, GL_TRUE, (float*) &projection_matrix);
 	
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ibo);
 	
@@ -359,8 +368,7 @@ GLuint shader_pipeline_create(const char* glsl_vertex_shader_source, const char*
 	return program;
 }
 
-bool initialize() {
-	
+bool initialize() {	
 	{
 		// Create default shader program
 		default_shader_program = shader_pipeline_create(default_vertex_shader_source, default_fragment_shader_source);
@@ -409,20 +417,67 @@ bool initialize() {
 	
 	{
 		// Create mesh presets.
+	
+		{
+			// Square 
+			
+			Vertex vertices[4] = {
+				{.position = {-0.5f, -0.5f, 0}, .color = {1, 1, 1, 1}, .uv = {0, 0}},
+				{.position = {+0.5f, -0.5f, 0}, .color = {1, 1, 1, 1}, .uv = {1, 0}},
+				{.position = {+0.5f, +0.5f, 0}, .color = {1, 1, 1, 1}, .uv = {1, 1}},
+				{.position = {-0.5f, +0.5f, 0}, .color = {1, 1, 1, 1}, .uv = {0, 1}},
+			};
+			
+			uint32_t indices[6] = {
+				0, 1, 2,
+				0, 2, 3,
+			};
+			
+			square_mesh = mesh_create(array_size(vertices), vertices, array_size(indices), indices);
+		}
 		
-		Vertex square_vertices[4] = {
-			{.position = {-0.5f, -0.5f, 0}, .color = {1, 1, 1, 1}, .uv = {0, 0}},
-			{.position = {+0.5f, -0.5f, 0}, .color = {1, 1, 1, 1}, .uv = {1, 0}},
-			{.position = {+0.5f, +0.5f, 0}, .color = {1, 1, 1, 1}, .uv = {1, 1}},
-			{.position = {-0.5f, +0.5f, 0}, .color = {1, 1, 1, 1}, .uv = {0, 1}},
-		};
 		
-		uint32_t square_indices[6] = {
-			0, 1, 2,
-			0, 2, 3,
-		};
-		
-		square_mesh = mesh_create(array_size(square_vertices), square_vertices, array_size(square_indices), square_indices);
+		{
+			// Circle 
+			
+			// The circle is just a regular polygon with N sides.
+			constexpr int N = 20; // Number of sides/triangles/ outer vertices.
+			constexpr int vertex_count = 1 + N; // center + one vertex per side.
+			constexpr int index_count = N * 3; // One triangle (center and two vertices) per side.
+			
+			Vertex vertices[vertex_count];
+			uint32_t indices[index_count];
+			
+			// Center
+			vertices[0] = {.position = {0, 0, 0}, .color = {1, 1, 1, 1}, .uv = {0.5, 0.5}};
+			
+			// Generate one vertex per side
+			for (int i = 1; i < vertex_count; i += 1) {
+				constexpr float dangle = (2.0f * PI) / (float) N;
+				
+				float angle = dangle * i;
+				float x = 0.5f * cos(angle);
+				float y = 0.5f * sin(angle);
+				
+				vertices[i] = {
+					.position = {x, y, 0}, 
+					.color = {1, 1, 1, 1}, 
+					.uv = {x + 0.5f, y + 0.5f}
+				};
+			}
+			
+			// Generate the indices for each triangle 
+			for (int t = 0; t <= N; t += 1) {
+				indices[3 * t + 0] = 0;
+				indices[3 * t + 1] = t + 1;
+				indices[3 * t + 2] = t + 2;
+			}
+			
+			indices[index_count - 1] = 1;
+			
+			circle_mesh = mesh_create(array_size(vertices), vertices, array_size(indices), indices);
+			
+		}
 	}
 	
 	ParticleParams params = {};
@@ -432,7 +487,7 @@ bool initialize() {
 	
 	params.spawn.position = {
 		.coordinate_system = CoordinateSystem::RECTANGULAR,
-		.x = {Distribution::UNIFORM, -1, 1},
+		.x = {Distribution::UNIFORM, -0.1, +0.1},
 		.y = {Distribution::UNIFORM, -0.25, +0.25},
 	};
 	params.spawn.velocity = {
@@ -449,7 +504,7 @@ bool initialize() {
 		.alpha = {Distribution::UNIFORM, 0.8, 1},
 	};
 	
-	params.spawn.scale = {Distribution::UNIFORM, 0.01, 0.1};
+	params.spawn.scale = {Distribution::UNIFORM, 0.001, 0.01};
 	
 	particle_system_initialize(&the_system, 1000, &params);
 	
@@ -484,8 +539,10 @@ void do_frame() {
 	glClearColor(0, 0, 0, 1);
 	glClear(GL_COLOR_BUFFER_BIT);
 	
+	projection_matrix = orthographic(-0.8f, +0.8f, +0.5f, -0.5f);
+	
 	particle_system_update(&the_system);
-	particle_system_render(&the_system, square_mesh);
+	particle_system_render(&the_system, circle_mesh);
 	
 // 	do_side_panel();
 }

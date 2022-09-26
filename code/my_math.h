@@ -3,6 +3,8 @@
 #include <math.h>
 #include <xmmintrin.h>
 
+#define PI 3.14159265358979323846
+
 struct vec2f {
 	float x;
 	float y;
@@ -53,11 +55,15 @@ void operator/=(vec3f& a, vec3f b);
 void operator*=(vec3f& v, float f);
 void operator/=(vec3f& v, float f);
 
-struct vec4f {
-	float x;
-	float y;
-	float z;
-	float w;
+union vec4f {
+	struct {
+		float x;
+		float y;
+		float z;
+		float w;
+	};
+	vec3f xyz;
+	vec2f xy;
 };
 
 vec4f operator+(vec4f a, vec4f b);
@@ -77,3 +83,12 @@ void operator/=(vec4f& a, vec4f b);
 
 void operator*=(vec4f& v, float f);
 void operator/=(vec4f& v, float f);
+
+union mat4f {
+	float m[4][4];
+};
+
+vec4f operator*(mat4f m, vec4f v);
+mat4f operator*(mat4f a, mat4f b);
+
+mat4f orthographic(float left, float right, float top, float bottom, float near = -1, float far = +1);

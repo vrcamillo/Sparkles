@@ -25,8 +25,6 @@ int main() {
 	// #random_number_cleanup
 	srand(time(NULL));
 	
-	
-	
 	if (!glfwInit()) return 1;
 	
 	GLFWmonitor* monitor = glfwGetPrimaryMonitor();

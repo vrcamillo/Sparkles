@@ -1,10 +1,12 @@
 #include "common.h"
 
+#include "sparkles.h"
+#include "sparkles_utils.h"
 using namespace Sparkles;
 
 static ParticleSystem* system;
 
-static RandomVec2   explosion_position = {
+static RandomVec2 explosion_position = {
 	.coordinate_system = CoordinateSystem::RECTANGULAR,
 	.x = {Distribution::UNIFORM, -0.5, +0.5},
 	.y = {Distribution::UNIFORM, -0.5, +0.5},
@@ -47,7 +49,7 @@ static SpawnParams spawn = {
 	.life = {Distribution::UNIFORM, 0.5, 2},
 };
 
-void firework_initialize() {	
+void firework_init() {	
 	system = particle_system_create(1000);
 	
 	for (int i = 0; i < system->count; i += 1) {
@@ -59,8 +61,8 @@ void firework_initialize() {
 	next_explosion_interval = random_get(explosion_interval);
 }
 
-void firework_frame() {
-	explosion_accumulation_timer += global_time.dt;
+void firework_frame(float dt) {
+	explosion_accumulation_timer += dt;
 	
 	if (explosion_accumulation_timer > next_explosion_interval) {
 		vec2 spawn_position = random_get(explosion_position);
@@ -81,7 +83,7 @@ void firework_frame() {
 	
 	for (int i = 0; i < system->count; i += 1) {
 		Particle* p = &system->particles[i];
-		particle_simulate(p, &physics, global_time.dt);
+		particle_simulate(p, &physics, dt);
 		
 		if (p->life < 0) p->scale = 0;
 		

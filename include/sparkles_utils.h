@@ -149,5 +149,7 @@ namespace Sparkles {
 	mat4 operator*(mat4 a, mat4 b);
 	
 #endif
+
+	mat4 orthographic(float left, float right, float top, float bottom, float near, float far);
 	
 }

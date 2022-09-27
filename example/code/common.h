@@ -9,9 +9,6 @@
 #include "GLFW/glfw3.h"
 #include "imgui.h"
 
-#include "sparkles.h"
-#include "sparkles_utils.h"
-
 #define array_size(array) sizeof(array) / sizeof((array)[0])
 
 struct TimeInfo {
@@ -21,9 +18,10 @@ struct TimeInfo {
 };
 
 extern GLFWwindow* global_window;
-extern TimeInfo global_time;
+// extern TimeInfo global_time;
 
+namespace Sparkles {
+	struct Mesh;
+}
 extern Sparkles::Mesh* square_mesh;
 extern Sparkles::Mesh* circle_mesh;
-
-Sparkles::mat4 orthographic(float left, float right, float top, float bottom, float near, float far);

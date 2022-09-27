@@ -5,6 +5,7 @@ A particle system library written in C++ and OpenGL.
 
 The API is documented in ```include/sparkles.h```.
 
+Here's a sample code:
 ``` C++
 #include "sparkles.h"
 using namespace Sparkles;
@@ -28,7 +29,7 @@ particle_system_upload_and_render(particle_system, my_mesh, &my_shader_constants
 
 ## Showcase
 
-Open the ```example``` folder and run ```build_win32.bat``` in a developer console with Microsoft Build Tools to build our particle showcase.
+Open the ```example``` folder and run ```build_win32.bat``` in to build our particle showcase.
 
 You will to run the script from a a developer console with Microsoft Build Tools. 
 Check __[this link](https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line)__ for reference.

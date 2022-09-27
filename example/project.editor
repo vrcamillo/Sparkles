@@ -1,0 +1,7 @@
+open_recursively code
+open_recursively ../third_party/glfw-3.3.8/include
+
+build_command build_win32.bat
+
+F1 Sparkles!
+F1_working_directory .build

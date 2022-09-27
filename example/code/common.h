@@ -1,17 +1,18 @@
 #pragma once 
 
 #include <inttypes.h> // Use proper type names, such as uint32_t, instead of unsigned long long.
-#include <stdio.h>
+#include <stdio.h> // For printf
+#include <math.h>
 
-#include "glad/gl.h"
+#define PI 3.14159265359
+
 #include "GLFW/glfw3.h"
 #include "imgui.h"
 
-#include "my_math.h"
+#include "sparkles.h"
+#include "sparkles_utils.h"
 
 #define array_size(array) sizeof(array) / sizeof((array)[0])
-
-void system_sleep_ms(int milliseconds);
 
 struct TimeInfo {
 	float max_dt = 0; // The maximum allowed frame time in seconds; set at initialization time.
@@ -21,7 +22,3 @@ struct TimeInfo {
 
 extern GLFWwindow* global_window;
 extern TimeInfo global_time;
-
-extern unsigned int default_font_data_size;
-extern unsigned int default_font_data[115744/4];
-

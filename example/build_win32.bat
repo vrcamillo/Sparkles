@@ -5,7 +5,7 @@ rem
 rem /////////////////////////////
 rem
 
-set build_folder=build
+set build_folder=.build
 
 set executable_name=Sparkles^^!
 
@@ -18,15 +18,15 @@ rem /////////////////////////////
 rem
 
 
-set glfw_folder=third_party\!glfw_id!
+set glfw_folder=..\third_party\!glfw_id!
 set glfw_build_folder=!build_folder!\.glfw
 set glfw_library=!glfw_build_folder!\win32_!glfw_id!.lib
 
-set imgui_folder=third_party\!imgui_id!
+set imgui_folder=..\third_party\!imgui_id!
 set imgui_build_folder=!build_folder!\.imgui
 set imgui_library=!imgui_build_folder!\win32_!imgui_id!.lib
 
-set glad_folder=third_party\!glad_id!
+set glad_folder=..\third_party\!glad_id!
 
 set executable_build_folder=!build_folder!\.sparkles
 set executable=!build_folder!\!executable_name!.exe
@@ -35,7 +35,7 @@ rem These variables are going to be filled below.
 set source_files=
 set includes=
 set defines=
-set libraries= kernel32.lib shell32.lib user32.lib gdi32.lib Winmm.lib
+set libraries= kernel32.lib shell32.lib user32.lib gdi32.lib Winmm.lib opengl32.lib
 
 rem Check if CL exists
 where /q cl
@@ -160,10 +160,15 @@ rem
 rem Main program
 rem 
 
-set includes=!includes! /I"code"
+set includes=!includes! /I"code" /I"..\include"
 
 rem Add all cpp files from 'code' 
 for /r %%f in (code\*.cpp) do (
+	set source_files=!source_files! %%f
+)
+
+set defines=!defines! /DGRAPHICS_OPENGL=1
+for /r %%f in (..\implementation\*.cpp) do (
 	set source_files=!source_files! %%f
 )
 

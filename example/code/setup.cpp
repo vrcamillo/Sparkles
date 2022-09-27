@@ -1,30 +1,39 @@
-
 //
 // This file just sets up window and ui initialization stuff.
 //
 
-#include "common.h"
 
-// #random_number_cleanup
-#include <stdlib.h> // srand
-#include <time.h> // time
+#if _WIN32 
+#include <windows.h>
+#else
+#error "This library cannot be compiled for the target platform."
+#endif
 
 #include "backends/imgui_impl_glfw.h"
+
+#if GRAPHICS_OPENGL
+#include "glad/gl.h"
 #include "backends/imgui_impl_opengl3.h"
+#define GRAPHICS_IMGUI_INIT() { ImGui_ImplGlfw_InitForOpenGL(global_window, true); ImGui_ImplOpenGL3_Init("#version 130"); }
+#define GRAPHICS_IMGUI_SHUTDOWN() ImGui_ImplOpenGL3_Shutdown();
+#define GRAPHICS_IMGUI_NEW_FRAME() ImGui_ImplOpenGL3_NewFrame();
+#define GRAPHICS_IMGUI_RENDER() ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+#else 
+#error "No graphics backend was defined."
+#endif
+
+#include "common.h"
+void system_sleep_ms(int milliseconds);
 
 GLFWwindow* global_window;
 TimeInfo global_time;
+extern unsigned int default_font_data_size;
+extern unsigned int default_font_data[115744/4];
 
 bool initialize();
 void do_frame();
 
-int main() {
-	
-	// Initialize random number generator seed to the current time, so that every time we run the program we get different results.
-	// Eventually we will want to be very careful about random numbers, but for the mean time, we just use c standard lib.
-	// #random_number_cleanup
-	srand(time(NULL));
-	
+int main() {	
 	if (!glfwInit()) return 1;
 	
 	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
@@ -64,8 +73,7 @@ int main() {
 		
 		ImGui::StyleColorsDark();
 		
-		ImGui_ImplGlfw_InitForOpenGL(global_window, true);
-		ImGui_ImplOpenGL3_Init("#version 130");
+		GRAPHICS_IMGUI_INIT();
 	}
 	
 	// Initialize time global variable.
@@ -83,7 +91,7 @@ int main() {
 		
 		{
 			// ImGui pre frame stuff
-			ImGui_ImplOpenGL3_NewFrame();
+			GRAPHICS_IMGUI_NEW_FRAME();
 			ImGui_ImplGlfw_NewFrame();
 			ImGui::NewFrame();
 		}
@@ -96,7 +104,8 @@ int main() {
 			int display_w, display_h;
 			glfwGetFramebufferSize(global_window, &display_w, &display_h);
 			glViewport(0, 0, display_w, display_h);
-			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+			
+			GRAPHICS_IMGUI_RENDER();
 		}
 		
 		glfwSwapBuffers(global_window);
@@ -120,7 +129,8 @@ int main() {
 	}
 	
 	// Shutdown ImGui
-	ImGui_ImplOpenGL3_Shutdown();
+	GRAPHICS_IMGUI_SHUTDOWN();
+	
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
 	
@@ -130,3 +140,11 @@ int main() {
 	
 	return 0;
 }
+
+#if _WIN32
+void system_sleep_ms(int milliseconds) {
+	timeBeginPeriod(1);
+	Sleep(milliseconds);
+}
+#endif
+

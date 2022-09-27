@@ -102,5 +102,5 @@ namespace Sparkles {
 	
 	// Shader initialization
 	ShaderPipeline* shader_pipeline_create_glsl(const char* glsl_vertex_shader_source, const char* glsl_pixel_shader_source); // Only supporting GLSL for now.
-	ShaderPipeline* shader_pipeline_destroy(ShaderPipeline* shader_pipeline);
+	void shader_pipeline_destroy(ShaderPipeline* shader_pipeline);
 }

@@ -5,6 +5,7 @@
 #include <math.h>
 
 #define PI 3.14159265359
+#define TAU 2 * PI
 
 #include "GLFW/glfw3.h"
 #include "imgui.h"

@@ -123,6 +123,12 @@ namespace Sparkles {
 		system->particles = new Particle[particle_count]; // #memory_cleanup
 		memset(system->particles, 0, instance_buffer_size);
 		
+		// #cleanup: This should be factored out into a function, so that it can be used for other backends.
+		for (int i = 0; i < system->count; i += 1) {
+			Particle* p = &system->particles[i];
+			p->life = -1;
+		}
+		
 		GLuint vbo;
 		glGenBuffers(1, &vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);

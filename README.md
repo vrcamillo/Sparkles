@@ -29,9 +29,9 @@ particle_system_upload_and_render(particle_system, my_mesh, &my_shader_constants
 
 ## Showcase
 
-Open the ```example``` folder and run ```build_win32.bat``` in to build our particle showcase.
+Open the ```example``` folder and run ```build_win32.bat``` to build our particle showcase.
 
-You will to run the script from a a developer console with Microsoft Build Tools. 
+You will to run the script from a developer console with Microsoft Build Tools installed. 
 Check __[this link](https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line)__ for reference.
 
 (Right now, we only support Windows, but we will eventually support other platforms as well).

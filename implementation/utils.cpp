@@ -75,4 +75,22 @@ namespace Sparkles {
 		return {};
 	}
 	
+	
+	void particle_simulate(Particle* p, PhysicsParams* physics, float dt) {
+		p->velocity += physics->gravity * dt;
+		p->position += p->velocity * dt;
+		p->velocity *= physics->friction; // #temporary: This should not be frame rate dependant!
+		p->life -= dt;
+	}
+	
+	void particle_spawn(Particle* p, SpawnParams* spawn) {
+		p->position.xy = random_get(spawn->position);
+		p->position.z = 0;
+		p->scale = random_get(spawn->scale);
+		p->color = random_get(spawn->color);
+		p->velocity.xy = random_get(spawn->velocity) * 0.2;
+		p->life = random_get(spawn->life);
+	}
+	
+	
 }

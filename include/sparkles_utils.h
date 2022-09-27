@@ -58,20 +58,33 @@ namespace Sparkles {
 		RandomScalar alpha;
 	};
 	
-	struct ParticleParams {
-		struct {
-			vec3 gravity;
-			float friction;	
-		} physics;
-		
-		struct {
-			RandomVec2 position;
-			RandomScalar scale;
-			RandomColor color;
-			RandomVec2 velocity;
-			RandomScalar life;
-		} spawn;
+	struct SpawnParams {
+		RandomVec2 position;
+		RandomScalar scale;
+		RandomColor color;
+		RandomVec2 velocity;
+		RandomScalar life;
 	};
+	
+	struct PhysicsParams {
+		vec3 gravity;
+		float friction;
+	};
+	
+	// 
+	// Simple simulation functions
+	//
+	void particle_simulate(Particle* particle, PhysicsParams* physics, float dt);
+	void particle_spawn(Particle* particle, SpawnParams* spawn);
+	
+	//
+	// Utility functions
+	//
+	float random_get_uniform();
+	float random_get(RandomScalar spec);
+	vec2 random_get(RandomVec2 spec);
+	vec4 random_get(RandomColor spec);
+	
 	
 #if !SPARKLES_USER_MATH_TYPES // If the user didn't define their vector types, we provide operator overloads for our vectors for convenience.
 	// vec2
@@ -136,13 +149,5 @@ namespace Sparkles {
 	mat4 operator*(mat4 a, mat4 b);
 	
 #endif
-	
-	//
-	// Utility functions
-	//
-	float random_get_uniform();
-	float random_get(RandomScalar spec);
-	vec2 random_get(RandomVec2 spec);
-	vec4 random_get(RandomColor spec);
 	
 }

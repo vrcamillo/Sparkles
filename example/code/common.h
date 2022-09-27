@@ -22,3 +22,8 @@ struct TimeInfo {
 
 extern GLFWwindow* global_window;
 extern TimeInfo global_time;
+
+extern Sparkles::Mesh* square_mesh;
+extern Sparkles::Mesh* circle_mesh;
+
+Sparkles::mat4 orthographic(float left, float right, float top, float bottom, float near, float far);

@@ -45,4 +45,4 @@ I plan to make it into a multi-platform library that supports other graphics API
 
 ## License
 
-This project is released under the MIT license. See LICENCE for more information.
+This project is released under the MIT license. See LICENSE for more information.

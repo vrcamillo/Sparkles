@@ -163,9 +163,7 @@ namespace Sparkles {
 		return true;
 	}
 	
-	static ShaderLinkage* get_or_create_shader_program(Shader* vertex_shader, Shader* pixel_shader) {
-		
-		
+	static ShaderLinkage* opengl_get_or_create_shader_program(Shader* vertex_shader, Shader* pixel_shader) {
 		if (!vertex_shader) vertex_shader = default_vertex_shader;
 		if (!pixel_shader)  pixel_shader  = default_pixel_shader;
 		
@@ -201,7 +199,7 @@ namespace Sparkles {
 		return entry;
 	}
 	
-	static void apply_uniforms(ShaderLinkage* linkage, RenderState* render_state) {
+	static void opengl_apply_uniforms(ShaderLinkage* linkage, RenderState* render_state) {
 		GLuint projection_uniform_loc = glGetUniformLocation(linkage->program, "projection");
 		if (projection_uniform_loc >= 0) {
 			glUniformMatrix4fv(projection_uniform_loc, 1, GL_TRUE, (float*) &render_state->projection);
@@ -256,11 +254,11 @@ namespace Sparkles {
 			// 
 			
 			// Bind the shader program
-			ShaderLinkage* linkage = get_or_create_shader_program(render_state->vertex_shader, render_state->pixel_shader);
+			ShaderLinkage* linkage = opengl_get_or_create_shader_program(render_state->vertex_shader, render_state->pixel_shader);
 			glUseProgram(linkage->program);
 			
 			// Set up uniform data.
-			apply_uniforms(linkage, render_state);
+			opengl_apply_uniforms(linkage, render_state);
 			
 			// Bind the vertex format and mesh buffers
 			glBindVertexArray(default_instancing_vao);
@@ -363,33 +361,42 @@ namespace Sparkles {
 		glUseProgram(0);
 	}
 	
-	Texture* texture_create(TextureFormat format, uint32_t width, uint32_t height, void* image_data) {
-		
+	struct OpenGLTextureFormatInfo {
 		GLenum gl_format;
 		GLenum gl_internal_format;
 		GLenum gl_type;
+	};
+	
+	static OpenGLTextureFormatInfo opengl_get_texture_format_info(TextureFormat format) {
+		OpenGLTextureFormatInfo info = {};
 		
 		switch (format) {
 		  case TextureFormat::RGBA_UINT8: {
-				gl_internal_format = GL_RGBA8; 
-				gl_type = GL_UNSIGNED_BYTE;
-				gl_format = GL_RGBA;
+				info.gl_internal_format = GL_RGBA8; 
+				info.gl_type = GL_UNSIGNED_BYTE;
+				info.gl_format = GL_RGBA;
 			} break;
 			
 		  case TextureFormat::RGBA_FLOAT16: {
-				gl_internal_format = GL_RGBA16F; 
-				gl_type = GL_HALF_FLOAT;
-				gl_format = GL_RGBA;
+				info.gl_internal_format = GL_RGBA16F; 
+				info.gl_type = GL_HALF_FLOAT;
+				info.gl_format = GL_RGBA;
 			} break;
 			
 		  default: 
 			SPARKLES_ASSERT(false);
-		}
+		}	
+		
+		return info;
+	}
+	
+	Texture* texture_create(TextureFormat format, uint32_t width, uint32_t height, void* image_data) {
+		auto format_info = opengl_get_texture_format_info(format);
 		
 		GLuint handle;
 		glGenTextures(1, &handle);
 		glBindTexture(GL_TEXTURE_2D, handle);
-		glTexImage2D(GL_TEXTURE_2D, 0, gl_internal_format, width, height, 0, gl_format, gl_type, image_data);
+		glTexImage2D(GL_TEXTURE_2D, 0, format_info.gl_internal_format, width, height, 0, format_info.gl_format, format_info.gl_type, image_data);
 		glBindTexture(GL_TEXTURE_2D, 0);
 		
 		Texture* texture = new Texture; // #memory_cleanup

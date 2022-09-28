@@ -78,13 +78,25 @@ namespace Sparkles {
 	void particle_spawn(Particle* particle, SpawnParams* spawn);
 	
 	//
-	// Utility functions
+	// Texture generation function
+	//
+	
+	//
+	// Mesh generation functions
+	//
+	Mesh* mesh_generate_regular_polygon(int number_of_sides);
+	Mesh* mesh_generate_quad(vec2 p0, vec2 p1);
+	
+	//
+	// Random number generator functions
 	//
 	float random_get_uniform();
 	float random_get(RandomScalar spec);
 	vec2 random_get(RandomVec2 spec);
 	vec4 random_get(RandomColor spec);
 	
+	// Math functions
+	mat4 mat4_identity();
 	
 #if !SPARKLES_USER_MATH_TYPES // If the user didn't define their vector types, we provide operator overloads for our vectors for convenience.
 	// vec2

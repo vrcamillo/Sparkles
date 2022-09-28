@@ -19,6 +19,7 @@ namespace Sparkles {
 	using vec3 = SPARKLES_USER_VEC3;
 	using vec4 = SPARKLES_USER_VEC4;
 	using mat4 = SPARKLES_USER_MAT4;
+	using Rect = SPARKLES_USER_RECT;
 #else
 	struct vec2 {
 		float x;
@@ -47,6 +48,19 @@ namespace Sparkles {
 	
 	union mat4 {
 		float m[4][4];
+	};
+	
+	union Rect {
+		struct {
+			float x;
+			float y;
+			float w;
+			float h;
+		};
+		struct {
+			vec2 position;
+			vec2 size;
+		};
 	};
 	
 #endif
@@ -121,6 +135,8 @@ namespace Sparkles {
 		
 		Texture* texture0 = nullptr;
 		
+		Rect viewport = {0, 0, 0, 0};
+		
 		// Shader constants
 		mat4 projection = {
 			1, 0, 0, 0,
@@ -159,5 +175,8 @@ namespace Sparkles {
 	
 	// Render target
 	RenderTarget* render_target_create(TextureFormat format, uint32_t width, uint32_t height);
-	// #todo: mesh_destroy
+	Texture* render_target_flush(RenderTarget* render_target);
+	void render_target_clear(RenderTarget* render_target, vec4 color); // nullptr means clearing our window's backbuffer.
+	
+	// #todo: render_target_destroy
 }

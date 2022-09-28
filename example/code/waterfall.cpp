@@ -54,7 +54,6 @@ void waterfall_init() {
 }
 
 void waterfall_frame(float dt) {
-	
 	accumulated_remaining_particles_to_spawn += particles_per_second * dt;
 
 	// Spawn new water particles.

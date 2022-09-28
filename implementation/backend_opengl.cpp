@@ -60,6 +60,7 @@ namespace Sparkles {
 	
 	struct RenderTarget {
 		GLuint fbo = 0; // Framebuffer buffer object.
+		Texture* color_attachment;
 	};
 	
 	struct ParticleSystem_GL : ParticleSystem {
@@ -159,6 +160,12 @@ namespace Sparkles {
 			}
 		}
 		
+		{
+			// Set default blend state. #temporary
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		}
+		
 		backend_initialized = true;
 		return true;
 	}
@@ -199,13 +206,27 @@ namespace Sparkles {
 		return entry;
 	}
 	
-	static void opengl_apply_uniforms(ShaderLinkage* linkage, RenderState* render_state) {
+	static void opengl_apply_render_state(RenderState* render_state) {
+		ShaderLinkage* linkage = opengl_get_or_create_shader_program(render_state->vertex_shader, render_state->pixel_shader);
+		glUseProgram(linkage->program);
+		
+		glBindFramebuffer(GL_FRAMEBUFFER, render_state->render_target ? render_state->render_target->fbo : 0);
+		
+		Rect viewport = render_state->viewport;
+		glViewport(viewport.x, viewport.y, viewport.w, viewport.h);
+		
+		// Apply uniforms
 		GLuint projection_uniform_loc = glGetUniformLocation(linkage->program, "projection");
 		if (projection_uniform_loc >= 0) {
 			glUniformMatrix4fv(projection_uniform_loc, 1, GL_TRUE, (float*) &render_state->projection);
 		} else {
 			// #incomplete #robustness: Provide a helpful error message here.
-		}
+		}	
+	}
+	
+	static void opengl_reset_render_state() {
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glUseProgram(0);
 	}
 	
 	ParticleSystem* particle_system_create(uint32_t particle_count) {		
@@ -254,11 +275,7 @@ namespace Sparkles {
 			// 
 			
 			// Bind the shader program
-			ShaderLinkage* linkage = opengl_get_or_create_shader_program(render_state->vertex_shader, render_state->pixel_shader);
-			glUseProgram(linkage->program);
-			
-			// Set up uniform data.
-			opengl_apply_uniforms(linkage, render_state);
+			opengl_apply_render_state(render_state);
 			
 			// Bind the vertex format and mesh buffers
 			glBindVertexArray(default_instancing_vao);
@@ -271,7 +288,7 @@ namespace Sparkles {
 			
 			// Reset OpenGL state.
 			glBindVertexArray(0);
-			glUseProgram(0);
+			opengl_reset_render_state();
 		}
 	}
 	
@@ -348,6 +365,8 @@ namespace Sparkles {
 	}
 	
 	void mesh_render(Mesh* mesh, RenderState* render_state) {
+		opengl_apply_render_state(render_state);
+		
 		// Bind the vertex format and mesh buffers
 		glBindVertexArray(default_vao);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ibo);
@@ -358,7 +377,8 @@ namespace Sparkles {
 		
 		// Reset OpenGL state.
 		glBindVertexArray(0);
-		glUseProgram(0);
+		opengl_reset_render_state();
+		
 	}
 	
 	struct OpenGLTextureFormatInfo {
@@ -404,4 +424,40 @@ namespace Sparkles {
 		return texture;
 	}
 
+	// Render target
+	RenderTarget* render_target_create(TextureFormat format, uint32_t width, uint32_t height) {		
+		GLuint fbo;
+		glGenFramebuffers(1, &fbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo); 
+		
+		auto color_attachment = texture_create(format, width, height, nullptr);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color_attachment->handle, 0);
+		
+		GLenum completion_status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		SPARKLES_ASSERT(completion_status == GL_FRAMEBUFFER_COMPLETE);
+		
+		glBindFramebuffer(GL_FRAMEBUFFER, 0); 
+		
+		RenderTarget* result = new RenderTarget;
+		result->fbo = fbo;
+		result->color_attachment = color_attachment;
+		return result;
+	}
+
+	Texture* render_target_flush(RenderTarget* render_target) {
+		// In OpenGL, we don't need to synchronize here, but that's not necessarily the case for other Graphics APIs.
+		return render_target->color_attachment;
+	}
+	
+	void render_target_clear(RenderTarget* render_target, vec4 color) {
+		if (render_target) {
+			glBindFramebuffer(GL_FRAMEBUFFER, render_target->fbo);
+		} else {	
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		}
+		
+		glClearColor(color.x, color.y, color.z, color.w);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+	
 }

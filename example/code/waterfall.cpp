@@ -76,9 +76,9 @@ void waterfall_frame(float dt) {
 	}
 	
 	// Upload and render
-	ShaderConstants constants;
-	constants.projection = orthographic(-0.8f, +0.8f, +0.5f, -0.5f, -1, +1);
-	particle_system_upload_and_render(water_particles, circle_mesh, &constants);
+	RenderState render_state;
+	render_state.projection = orthographic(-0.8f, +0.8f, +0.5f, -0.5f, -1, +1);
+	particle_system_upload_and_render(water_particles, circle_mesh, &render_state);
 	
 	// UI controls
 	ImGui::SliderFloat("Particles per second", &particles_per_second, 0.0f, 5000.0f, "%.0f");

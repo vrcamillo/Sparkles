@@ -29,6 +29,7 @@ const Example examples[] = {
 int current_example_index = 1;
 
 bool initialize() {
+	Sparkles::initialize();
 	
 	// Create mesh presets.
 	
@@ -47,7 +48,7 @@ bool initialize() {
 			0, 2, 3,
 		};
 		
-		square_mesh = mesh_create(array_size(vertices), vertices, array_size(indices), indices);
+		square_mesh = mesh_create(array_size(vertices), array_size(indices), vertices, indices);
 	}
 	
 	{
@@ -88,7 +89,7 @@ bool initialize() {
 		
 		indices[index_count - 1] = 1;
 		
-		circle_mesh = mesh_create(array_size(vertices), vertices, array_size(indices), indices);	
+		circle_mesh = mesh_create(array_size(vertices), array_size(indices), vertices, indices);	
 	}
 
 	// Initialize all examples.

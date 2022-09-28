@@ -2,7 +2,15 @@
 
 #include <inttypes.h>
 
-// #define assert(condition) 
+#ifndef SPARKLES_ASSERT
+#include <assert.h>
+#define SPARKLES_ASSERT(condition) assert(condition)
+#endif
+
+#ifndef SPARKLES_LOG
+#include <stdio.h>
+#define SPARKLES_LOG(...) { printf(__VA_ARGS__); fflush(stdout); }
+#endif
 
 namespace Sparkles {
 	
@@ -56,6 +64,10 @@ namespace Sparkles {
 		Particle* particles;
 	};
 	
+	//
+	// Graphics stuff
+	//
+	
 	// In the future, we may support other vertex formats, but for now, this is the default one.
 	union Vertex {
 		struct {
@@ -80,27 +92,72 @@ namespace Sparkles {
 	
 	static_assert(sizeof(Vertex) == 9 * sizeof(float));
 	
-	// These structs are defined by the graphics backend.
-	struct Mesh; 
-	struct ShaderPipeline;
+	enum class ShaderLanguage {
+		GLSL,
+	};
 	
-	struct ShaderConstants {
-		mat4 projection;
+	enum class ShaderType {
+		VERTEX,
+		PIXEL,
+	};
+	
+	enum class TextureFormat {
+		NONE,
+		
+		RGBA_U8,
+		RGBA_FLOAT16,
+	};
+	
+	// These structs are defined by the graphics backend.
+	struct Shader;
+	struct Texture;
+	struct Mesh; 
+	struct RenderTarget;
+	
+	struct RenderState {
+		Shader* vertex_shader = nullptr;
+		Shader* pixel_shader = nullptr;
+		RenderTarget* render_target = nullptr;
+		
+		Texture* texture0 = nullptr;
+		
+		// Shader constants
+		mat4 projection = {
+			1, 0, 0, 0,
+			0, 1, 0, 0,
+			0, 0, 1, 0,
+			0, 0, 0, 1,
+			
+		};
 	};
 	
 	//
 	// Basic API
 	// 
-	
-	// Particle system.
+	bool initialize();
 	ParticleSystem* particle_system_create(uint32_t particle_count);
-	void particle_system_upload_and_render(ParticleSystem* system, Mesh* mesh, ShaderConstants* constants, ShaderPipeline* shader_pipeline = nullptr);
+	void particle_system_upload_and_render(ParticleSystem* system, Mesh* mesh, RenderState* render_state);
 	
-	// Mesh initialization
-	Mesh* mesh_create(uint32_t vertex_count, Vertex vertices[], uint32_t index_count, uint32_t indices[]);
-	void mesh_destroy(Mesh* mesh);
+	//
+	// Graphics Utility
+	//
 	
-	// Shader initialization
-	ShaderPipeline* shader_pipeline_create_glsl(const char* glsl_vertex_shader_source, const char* glsl_pixel_shader_source); // Only supporting GLSL for now.
-	void shader_pipeline_destroy(ShaderPipeline* shader_pipeline);
+	// Shader
+	Shader* shader_create(ShaderLanguage language, ShaderType type, const char* shader_source_code);
+	// #todo: shader_hotload
+	// #todo: shader_destroy
+	
+	// Texture 
+	Texture* texture_create(TextureFormat format, uint32_t width, uint32_t height, void* image_data);
+	// #todo: texture_destroy
+	
+	// Mesh
+	Mesh* mesh_create(uint32_t vertex_count, uint32_t index_count, Vertex vertices[] = nullptr, uint32_t indices[] = nullptr);
+	void mesh_upload(Mesh* mesh, uint32_t vertex_count, Vertex vertices[], uint32_t index_count, uint32_t indices[]);
+	void mesh_render(Mesh* mesh, RenderState* render_state);
+	// #todo: mesh_destroy
+	
+	// Render target
+	RenderTarget* render_target_create(TextureFormat format, uint32_t width, uint32_t height);
+	// #todo: mesh_destroy
 }

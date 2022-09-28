@@ -91,7 +91,7 @@ void firework_frame(float dt) {
 		
 	}
 	
-	ShaderConstants constants;
-	constants.projection = orthographic(-0.8f, +0.8f, +0.5f, -0.5f, -1, +1);
-	particle_system_upload_and_render(system, circle_mesh, &constants);
+	// ShaderConstants constants;
+	// constants.projection = orthographic(-0.8f, +0.8f, +0.5f, -0.5f, -1, +1);
+	// particle_system_upload_and_render(system, circle_mesh, &constants);
 }

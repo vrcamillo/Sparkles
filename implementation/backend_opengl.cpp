@@ -1,5 +1,6 @@
 #include "sparkles.h"
 #include "glad/gl.h"
+
 #include <stddef.h> // For offsetof
 #include <string> // For memset
 
@@ -37,85 +38,179 @@ void main() {
 
 )glsl";
 
+// #memory_cleanup #leak: We don't want to call 'new' all over the place.
+
 namespace Sparkles {	
-	// #memory_cleanup #leak: We don't want to call new all over the place.
 	
+	// Here we define our custom graphics data structures, which are forward declared  in "sparkles.h"
 	struct Mesh {
 		GLuint vbo; // Vertex buffer object
 		GLuint ibo; // Index buffer object
+		uint32_t vertex_count;
 		uint32_t index_count;
 	};
 	
-	struct ShaderPipeline {
-		GLuint program;
+	struct Shader {
+		GLuint handle; // OpenGL shader handle.
+	};
+	
+	struct Texture {
+		GLuint handle; // OpenGL texture handle.
+	};
+	
+	struct RenderTarget {
+		GLuint fbo; // Framebuffer buffer object.
 	};
 	
 	struct ParticleSystem_GL : ParticleSystem {
 		GLuint instances_vbo; // Eventually we will want to use multiple buffers to avoid OpenGL synchronization delays. #opengl_sync_performance
 	};
 	
+	struct ShaderLinkage {
+		GLuint program;
+		Shader* vertex_shader;
+		Shader* pixel_shader;
+	};
+	
 	// These are global variables. Maybe we should have a backend struct to hold global data?
-	static ShaderPipeline* default_shader_program;
+	static Shader* default_vertex_shader;
+	static Shader* default_pixel_shader;
 	static GLuint default_vao;
+	static GLuint default_instancing_vao;
 	static bool backend_initialized;
 
-	bool backend_initialize() {	
+	// #temporary: Eventually we will want an actual table here.
+	constexpr int shader_linkage_table_capacity = 128;
+	int shader_linkage_table_length;
+	ShaderLinkage shader_linkage_table[shader_linkage_table_capacity]; 
+	
+	bool initialize() {		
 		{
 			// Create default shader program
-			default_shader_program = shader_pipeline_create_glsl(default_glsl_vertex_shader_source, default_glsl_pixel_shader_source);
-			if (!default_shader_program) return false;
+			default_vertex_shader = shader_create(ShaderLanguage::GLSL, ShaderType::VERTEX, default_glsl_vertex_shader_source);
+			SPARKLES_ASSERT(default_vertex_shader);
+			
+			default_pixel_shader = shader_create(ShaderLanguage::GLSL, ShaderType::PIXEL, default_glsl_pixel_shader_source);
+			SPARKLES_ASSERT(default_pixel_shader);
 		}
 		
 		{
-			// Create default VAO.
-			glGenVertexArrays(1, &default_vao);
-			glBindVertexArray(default_vao);
+			// Create default VAOs.
 			
-			// Vertex position
-			glEnableVertexAttribArray(0);
-			glVertexAttribBinding(0, 0);
-			glVertexAttribFormat(0, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
+			{
+				glGenVertexArrays(1, &default_vao);
+				glBindVertexArray(default_vao);
+				
+				// Vertex position
+				glEnableVertexAttribArray(0);
+				glVertexAttribBinding(0, 0);
+				glVertexAttribFormat(0, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
+				
+				// Vertex color
+				glEnableVertexAttribArray(1);
+				glVertexAttribBinding(1, 0);
+				glVertexAttribFormat(1, 4, GL_FLOAT, GL_FALSE, offsetof(Vertex, color));
+				
+				// Vertex uv
+				glEnableVertexAttribArray(2);
+				glVertexAttribBinding(2, 0);
+				glVertexAttribFormat(2, 2, GL_FLOAT, GL_FALSE, offsetof(Vertex, uv));
+				
+				glBindVertexArray(0);
+			}
 			
-			// Vertex color
-			glEnableVertexAttribArray(1);
-			glVertexAttribBinding(1, 0);
-			glVertexAttribFormat(1, 4, GL_FLOAT, GL_FALSE, offsetof(Vertex, color));
-			
-			// Vertex uv
-			glEnableVertexAttribArray(2);
-			glVertexAttribBinding(2, 0);
-			glVertexAttribFormat(2, 2, GL_FLOAT, GL_FALSE, offsetof(Vertex, uv));
-			
-			// Particle position
-			glEnableVertexAttribArray(3);
-			glVertexAttribBinding(3, 1);
-			glVertexAttribFormat(3, 3, GL_FLOAT, GL_FALSE, offsetof(Particle, position));
-			
-			// Particle scale
-			glEnableVertexAttribArray(4);
-			glVertexAttribBinding(4, 1);
-			glVertexAttribFormat(4, 1, GL_FLOAT, GL_FALSE, offsetof(Particle, scale));
-			
-			// Particle color
-			glEnableVertexAttribArray(5);
-			glVertexAttribBinding(5, 1);
-			glVertexAttribFormat(5, 4, GL_FLOAT, GL_FALSE, offsetof(Particle, color));
-			
-			glVertexBindingDivisor(1, 1);
-			
-			glBindVertexArray(0);
+			{
+				glGenVertexArrays(1, &default_instancing_vao);
+				glBindVertexArray(default_instancing_vao);
+				
+				// Vertex position
+				glEnableVertexAttribArray(0);
+				glVertexAttribBinding(0, 0);
+				glVertexAttribFormat(0, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
+				
+				// Vertex color
+				glEnableVertexAttribArray(1);
+				glVertexAttribBinding(1, 0);
+				glVertexAttribFormat(1, 4, GL_FLOAT, GL_FALSE, offsetof(Vertex, color));
+				
+				// Vertex uv
+				glEnableVertexAttribArray(2);
+				glVertexAttribBinding(2, 0);
+				glVertexAttribFormat(2, 2, GL_FLOAT, GL_FALSE, offsetof(Vertex, uv));
+				
+				// Particle position
+				glEnableVertexAttribArray(3);
+				glVertexAttribBinding(3, 1);
+				glVertexAttribFormat(3, 3, GL_FLOAT, GL_FALSE, offsetof(Particle, position));
+				
+				// Particle scale
+				glEnableVertexAttribArray(4);
+				glVertexAttribBinding(4, 1);
+				glVertexAttribFormat(4, 1, GL_FLOAT, GL_FALSE, offsetof(Particle, scale));
+				
+				// Particle color
+				glEnableVertexAttribArray(5);
+				glVertexAttribBinding(5, 1);
+				glVertexAttribFormat(5, 4, GL_FLOAT, GL_FALSE, offsetof(Particle, color));
+				
+				glVertexBindingDivisor(1, 1);
+				
+				glBindVertexArray(0);
+			}
 		}
 		
 		backend_initialized = true;
 		return true;
 	}
 	
-	ParticleSystem* particle_system_create(uint32_t particle_count) {
-		if (!backend_initialized) { 
-			backend_initialize(); // #robustness: If this fails, we should return an error.
-			backend_initialized = true;
+	static ShaderLinkage* get_or_create_shader_program(Shader* vertex_shader, Shader* pixel_shader) {
+		
+		
+		if (!vertex_shader) vertex_shader = default_vertex_shader;
+		if (!pixel_shader)  pixel_shader  = default_pixel_shader;
+		
+		for (int i = 0; i < shader_linkage_table_length; i += 1) {
+			ShaderLinkage* entry = &shader_linkage_table[i];
+			if (vertex_shader == entry->vertex_shader && pixel_shader == entry->pixel_shader) {
+				return entry;
+			}
 		}
 		
+		SPARKLES_ASSERT(shader_linkage_table_length < shader_linkage_table_capacity); // Not being robust here because we plan to turn shader_linkage_table into an actual table.
+		
+		// If we get here, it means we did not find both shaders linked together in a program, so we generate a new one.
+		GLuint program = glCreateProgram();
+		glAttachShader(program, vertex_shader->handle);
+		glAttachShader(program, pixel_shader->handle);
+		glLinkProgram(program);
+		
+		int program_linked = 0;
+		glGetProgramiv(program, GL_LINK_STATUS, &program_linked);
+		if (!program_linked) {
+			char message[512];
+			glGetProgramInfoLog(program, sizeof(message), nullptr, message);
+			SPARKLES_LOG("Failed to link vertex and fragment shaders:\n%s\n", message);
+			glDeleteProgram(program);
+			return 0;
+		}
+		
+		auto entry = &shader_linkage_table[shader_linkage_table_length++];
+		entry->program = program;
+		entry->vertex_shader = vertex_shader;
+		entry->pixel_shader = pixel_shader;
+		return entry;
+	}
+	
+	static void apply_uniforms(ShaderLinkage* linkage, RenderState* render_state) {
+		GLuint projection_uniform_loc = glGetUniformLocation(linkage->program, "projection");
+		if (projection_uniform_loc >= 0) {
+			glUniformMatrix4fv(projection_uniform_loc, 1, GL_TRUE, (float*) &render_state->projection);
+		} else {
+			// #incomplete #robustness: Provide a helpful error message here.
+		}
+	}
+	
+	ParticleSystem* particle_system_create(uint32_t particle_count) {		
 		uint32_t instance_buffer_size = particle_count * sizeof(Particle);
 		
 		auto system = new ParticleSystem_GL; // #memory_cleanup
@@ -139,7 +234,7 @@ namespace Sparkles {
 		return system;
 	}
 	
-	void particle_system_upload_and_render(ParticleSystem* system, Mesh* mesh, ShaderConstants* constants, ShaderPipeline* shader_pipeline) {
+	void particle_system_upload_and_render(ParticleSystem* system, Mesh* mesh, RenderState* render_state) {
 		auto system_gl = (ParticleSystem_GL*) system;
 		
 		{	
@@ -161,19 +256,14 @@ namespace Sparkles {
 			// 
 			
 			// Bind the shader program
-			GLuint program = (shader_pipeline) ? shader_pipeline->program : default_shader_program->program;
-			glUseProgram(program);
+			ShaderLinkage* linkage = get_or_create_shader_program(render_state->vertex_shader, render_state->pixel_shader);
+			glUseProgram(linkage->program);
 			
 			// Set up uniform data.
-			GLuint projection_uniform_loc = glGetUniformLocation(program, "projection");
-			if (projection_uniform_loc >= 0) {
-				glUniformMatrix4fv(projection_uniform_loc, 1, GL_TRUE, (float*) &constants->projection);
-			} else {
-				// #incomplete #robustness: Provide a helpful error message here.
-			}
+			apply_uniforms(linkage, render_state);
 			
 			// Bind the vertex format and mesh buffers
-			glBindVertexArray(default_vao);
+			glBindVertexArray(default_instancing_vao);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ibo);
 			glBindVertexBuffer(0, mesh->vbo, 0, sizeof(Vertex));
 			glBindVertexBuffer(1, system_gl->instances_vbo, 0, sizeof(Particle));
@@ -187,79 +277,90 @@ namespace Sparkles {
 		}
 	}
 	
-	Mesh* mesh_create(uint32_t vertex_count, Vertex vertices[], uint32_t index_count, uint32_t indices[]) { 
+	Shader* shader_create(ShaderLanguage language, ShaderType type, const char* shader_source_code) {
+		
+		GLenum gl_shader_type = -1;
+		switch (type) {
+		  case ShaderType::VERTEX: gl_shader_type = GL_VERTEX_SHADER;   break;
+		  case ShaderType::PIXEL:  gl_shader_type = GL_FRAGMENT_SHADER; break;
+		  default: SPARKLES_ASSERT(false);
+		}
+		
+		GLuint handle = glCreateShader(gl_shader_type);
+		glShaderSource(handle, 1, &shader_source_code, nullptr);
+		glCompileShader(handle);
+		
+		int shader_compiled;
+		glGetShaderiv(handle, GL_COMPILE_STATUS, &shader_compiled);
+		if (!shader_compiled) {
+			char message[512];
+			glGetShaderInfoLog(handle, sizeof(message), nullptr, message);
+			SPARKLES_LOG("Failed to compile vertex shader:\n%s\n", message);
+			glDeleteShader(handle);
+			return nullptr;
+		}
+	
+		Shader* result = new Shader; // #memory_cleanup
+		result->handle = handle;
+		return result;
+	}
+	
+	Mesh* mesh_create(uint32_t vertex_count, uint32_t index_count, Vertex vertices[], uint32_t indices[]) { 
 		uint32_t vertex_buffer_size = vertex_count * sizeof(vertices[0]);
 		uint32_t index_buffer_size = index_count * sizeof(indices[0]);
+		
+		// The rationale here is that, if we provide vertices at mesh_create, this mesh is probably going to be static throughout the program; otherwise, we assume it will be updated regularly.
+		// This doesn't have to be true, and OpenGL guaranteees (https://registry.khronos.org/OpenGL-Refpages/gl4/html/glBufferData.xhtml) that these are just hints that are only used for performance optimizations within the driver.
+		GLenum usage = (vertices == nullptr) ? GL_STREAM_DRAW : GL_STATIC_DRAW;
 		
 		GLuint vbo;
 		glGenBuffers(1, &vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size, vertices, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size, vertices, usage);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		
 		GLuint ibo;
 		glGenBuffers(1, &ibo);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, indices, GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, indices, usage);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		
 		Mesh* result = new Mesh; // #memory_cleanup
 		result->vbo = vbo;
 		result->ibo = ibo;
+		result->vertex_count = vertex_count;
 		result->index_count = index_count;
 		return result;
 	}
 	
-	ShaderPipeline* shader_pipeline_create_glsl(const char* glsl_vertex_shader_source, const char* glsl_fragment_shader_source) {
-		GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-		glShaderSource(vertex_shader, 1, &glsl_vertex_shader_source, nullptr);
-		glCompileShader(vertex_shader);
+	void mesh_upload(Mesh* mesh, uint32_t vertex_count, Vertex vertices[], uint32_t index_count, uint32_t indices[]) {
+		SPARKLES_ASSERT(vertex_count <= mesh->vertex_count);
+		SPARKLES_ASSERT(index_count <= mesh->index_count);
 		
-		int vertex_shader_compiled;
-		glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &vertex_shader_compiled);
-		if (!vertex_shader_compiled) {
-			char message[512];
-			glGetShaderInfoLog(vertex_shader, sizeof(message), nullptr, message);
-		// printf("Failed to compile vertex shader:\n%s\n", message);
-			return nullptr; // #leak: Vertex shader leaks here.
-		}
+		uint32_t vertex_buffer_size = vertex_count * sizeof(vertices[0]);
+		uint32_t index_buffer_size = index_count * sizeof(indices[0]);
 		
-		GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-		glShaderSource(fragment_shader, 1, &glsl_fragment_shader_source, nullptr);
-		glCompileShader(fragment_shader);
+		glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, vertex_buffer_size, vertices);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		
-		int fragment_shader_compiled = 0;
-		glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &fragment_shader_compiled);
-		if (!fragment_shader_compiled) {
-			char message[512];
-			glGetShaderInfoLog(fragment_shader, sizeof(message), nullptr, message);
-			// printf("Failed to compile fragment shader:\n%s\n", message);
-			return nullptr; // #leak: Vertex and fragment shaders leak here.
-		}
-		
-		GLuint program = glCreateProgram();
-		glAttachShader(program, vertex_shader);
-		glAttachShader(program, fragment_shader);
-		glLinkProgram(program);
-		
-		int program_linked = 0;
-		glGetProgramiv(program, GL_LINK_STATUS, &program_linked);
-		if (!program_linked) {
-			char message[512];
-			glGetProgramInfoLog(program, sizeof(message), nullptr, message);
-			// printf("Failed to link vertex and fragment shaders:\n%s\n", message);
-			return nullptr; // #leak: Vertex shader, fragment shader, and program leak here.
-		}
-		
-		// From OpenGL docs (https://registry.khronos.org/OpenGL-Refpages/gl4/html/glDeleteShader.xhtml):
-		//     "If a shader object to be deleted is attached to a program object, it will be flagged for deletion, 
-		//      but it will not be deleted until it is no longer attached to any program object, for any rendering context
-		//      (i.e., it must be detached from wherever it was attached before it will be deleted)."
-		glDeleteShader(vertex_shader);
-		glDeleteShader(fragment_shader);
-		
-		ShaderPipeline* result = new ShaderPipeline; // #memory_cleanup
-		result->program = program;
-		return result;
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ibo);
+		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, index_buffer_size, indices);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
+	
+	void mesh_render(Mesh* mesh, RenderState* render_state) {
+		// Bind the vertex format and mesh buffers
+		glBindVertexArray(default_vao);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ibo);
+		glBindVertexBuffer(0, mesh->vbo, 0, sizeof(Vertex));
+		
+		// Draw all particles in a single draw call.
+		glDrawElements(GL_TRIANGLES, mesh->index_count, GL_UNSIGNED_INT, (void*) 0);
+		
+		// Reset OpenGL state.
+		glBindVertexArray(0);
+		glUseProgram(0);
+	}
+
 }

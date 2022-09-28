@@ -3,7 +3,6 @@
 // #random_number_cleanup
 #include <stdlib.h> // srand
 #include <time.h> // time
-#include <assert.h> // assert
 
 // #include "sparkles.h"
 #include "sparkles_utils.h"

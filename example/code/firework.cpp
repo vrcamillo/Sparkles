@@ -88,10 +88,9 @@ void firework_frame(float dt) {
 		if (p->life < 0) p->scale = 0;
 		
 		p->color.w *= 0.95;
-		
 	}
 	
-	// ShaderConstants constants;
-	// constants.projection = orthographic(-0.8f, +0.8f, +0.5f, -0.5f, -1, +1);
-	// particle_system_upload_and_render(system, circle_mesh, &constants);
+	RenderState render_state;
+	render_state.projection = orthographic(-0.8f, +0.8f, +0.5f, -0.5f, -1, +1);
+	particle_system_upload_and_render(system, circle_mesh, &render_state);
 }

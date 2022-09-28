@@ -104,7 +104,7 @@ namespace Sparkles {
 	enum class TextureFormat {
 		NONE,
 		
-		RGBA_U8,
+		RGBA_UINT8,
 		RGBA_FLOAT16,
 	};
 	

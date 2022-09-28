@@ -44,32 +44,32 @@ namespace Sparkles {
 	
 	// Here we define our custom graphics data structures, which are forward declared  in "sparkles.h"
 	struct Mesh {
-		GLuint vbo; // Vertex buffer object
-		GLuint ibo; // Index buffer object
-		uint32_t vertex_count;
-		uint32_t index_count;
+		GLuint vbo = 0; // Vertex buffer object
+		GLuint ibo = 0; // Index buffer object
+		uint32_t vertex_count = 0;
+		uint32_t index_count = 0;
 	};
 	
 	struct Shader {
-		GLuint handle; // OpenGL shader handle.
+		GLuint handle = 0; // OpenGL shader handle.
 	};
 	
 	struct Texture {
-		GLuint handle; // OpenGL texture handle.
+		GLuint handle = 0; // OpenGL texture handle.
 	};
 	
 	struct RenderTarget {
-		GLuint fbo; // Framebuffer buffer object.
+		GLuint fbo = 0; // Framebuffer buffer object.
 	};
 	
 	struct ParticleSystem_GL : ParticleSystem {
-		GLuint instances_vbo; // Eventually we will want to use multiple buffers to avoid OpenGL synchronization delays. #opengl_sync_performance
+		GLuint instances_vbo = 0; // Eventually we will want to use multiple buffers to avoid OpenGL synchronization delays. #opengl_sync_performance
 	};
 	
 	struct ShaderLinkage {
-		GLuint program;
-		Shader* vertex_shader;
-		Shader* pixel_shader;
+		GLuint program = 0;
+		Shader* vertex_shader = nullptr;
+		Shader* pixel_shader = nullptr;
 	};
 	
 	// These are global variables. Maybe we should have a backend struct to hold global data?
@@ -361,6 +361,40 @@ namespace Sparkles {
 		// Reset OpenGL state.
 		glBindVertexArray(0);
 		glUseProgram(0);
+	}
+	
+	Texture* texture_create(TextureFormat format, uint32_t width, uint32_t height, void* image_data) {
+		
+		GLenum gl_format;
+		GLenum gl_internal_format;
+		GLenum gl_type;
+		
+		switch (format) {
+		  case TextureFormat::RGBA_UINT8: {
+				gl_internal_format = GL_RGBA8; 
+				gl_type = GL_UNSIGNED_BYTE;
+				gl_format = GL_RGBA;
+			} break;
+			
+		  case TextureFormat::RGBA_FLOAT16: {
+				gl_internal_format = GL_RGBA16F; 
+				gl_type = GL_HALF_FLOAT;
+				gl_format = GL_RGBA;
+			} break;
+			
+		  default: 
+			SPARKLES_ASSERT(false);
+		}
+		
+		GLuint handle;
+		glGenTextures(1, &handle);
+		glBindTexture(GL_TEXTURE_2D, handle);
+		glTexImage2D(GL_TEXTURE_2D, 0, gl_internal_format, width, height, 0, gl_format, gl_type, image_data);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		
+		Texture* texture = new Texture; // #memory_cleanup
+		texture->handle = handle;
+		return texture;
 	}
 
 }

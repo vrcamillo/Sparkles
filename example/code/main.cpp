@@ -26,7 +26,7 @@ const Example examples[] = {
 	{"Waterfall!", waterfall_init, waterfall_frame},
 };
 
-int current_example_index = 1;
+int current_example_index = 0;
 
 bool initialize() {
 	Sparkles::initialize();

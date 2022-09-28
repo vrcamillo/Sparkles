@@ -4,8 +4,8 @@
 #include <stddef.h> // For offsetof
 #include <string> // For memset
 
-static const char* default_glsl_vertex_shader_source = R"glsl(
-#version 330 core
+static const char* glsl_default_instancing_vertex_shader_source = R"glsl(
+#version 410
 
 layout (location = 0) in vec3 vertex_position;
 layout (location = 1) in vec4 vertex_color;
@@ -17,23 +17,54 @@ layout (location = 5) in vec4 instance_color;
 
 uniform mat4 projection;
 
+out vec2 pixel_uv;
 out vec4 pixel_color;
 
 void main() {
 	vec4 world_position = vec4(instance_position + vertex_position * instance_scale, 1);
 	gl_Position = projection * world_position;
 	pixel_color = vertex_color * instance_color;
+	pixel_uv = vertex_uv;
 }  
 )glsl";
 
-static const char* default_glsl_pixel_shader_source = R"glsl(
-#version 330 core
+static const char* glsl_default_vertex_shader_source = R"glsl(
+#version 410
 
-in vec4 pixel_color;
-out vec4 result_color; 
+layout (location = 0) in vec3 vertex_position;
+layout (location = 1) in vec4 vertex_color;
+layout (location = 2) in vec2 vertex_uv;
+
+uniform mat4 projection;
+
+out vec2 pixel_uv;
+out vec4 pixel_color;
 
 void main() {
-	result_color = pixel_color;
+	vec4 world_position = vec4(vertex_position, 1);
+	gl_Position = projection * world_position;
+	pixel_color = vertex_color;
+	pixel_uv = vertex_uv;
+}  
+)glsl";
+
+static const char* glsl_default_pixel_shader_source = R"glsl(
+#version 410
+
+in vec4 pixel_color;
+in vec2 pixel_uv;
+out vec4 result_color; 
+
+uniform bool use_texture;
+uniform sampler2D sampler;
+
+void main() {
+	if (use_texture) {
+		vec4 texture_color = texture(sampler, pixel_uv);
+		result_color = texture_color * pixel_color;
+	} else {
+		result_color = pixel_color;
+	}
 }
 
 )glsl";
@@ -74,6 +105,7 @@ namespace Sparkles {
 	};
 	
 	// These are global variables. Maybe we should have a backend struct to hold global data?
+	static Shader* default_instancing_vertex_shader;
 	static Shader* default_vertex_shader;
 	static Shader* default_pixel_shader;
 	static GLuint default_vao;
@@ -88,10 +120,13 @@ namespace Sparkles {
 	bool initialize() {		
 		{
 			// Create default shader program
-			default_vertex_shader = shader_create(ShaderLanguage::GLSL, ShaderType::VERTEX, default_glsl_vertex_shader_source);
+			default_instancing_vertex_shader = shader_create(ShaderLanguage::GLSL, ShaderType::VERTEX, glsl_default_instancing_vertex_shader_source);
+			SPARKLES_ASSERT(default_instancing_vertex_shader);
+			
+			default_vertex_shader = shader_create(ShaderLanguage::GLSL, ShaderType::VERTEX, glsl_default_vertex_shader_source);
 			SPARKLES_ASSERT(default_vertex_shader);
 			
-			default_pixel_shader = shader_create(ShaderLanguage::GLSL, ShaderType::PIXEL, default_glsl_pixel_shader_source);
+			default_pixel_shader = shader_create(ShaderLanguage::GLSL, ShaderType::PIXEL, glsl_default_pixel_shader_source);
 			SPARKLES_ASSERT(default_pixel_shader);
 		}
 		
@@ -170,8 +205,8 @@ namespace Sparkles {
 		return true;
 	}
 	
-	static ShaderLinkage* opengl_get_or_create_shader_program(Shader* vertex_shader, Shader* pixel_shader) {
-		if (!vertex_shader) vertex_shader = default_vertex_shader;
+	static ShaderLinkage* opengl_get_or_create_shader_program(Shader* vertex_shader, Shader* pixel_shader, bool instancing) {
+		if (!vertex_shader) vertex_shader = instancing ? default_instancing_vertex_shader : default_vertex_shader;
 		if (!pixel_shader)  pixel_shader  = default_pixel_shader;
 		
 		for (int i = 0; i < shader_linkage_table_length; i += 1) {
@@ -206,8 +241,8 @@ namespace Sparkles {
 		return entry;
 	}
 	
-	static void opengl_apply_render_state(RenderState* render_state) {
-		ShaderLinkage* linkage = opengl_get_or_create_shader_program(render_state->vertex_shader, render_state->pixel_shader);
+	static void opengl_apply_render_state(RenderState* render_state, bool instancing) {
+		ShaderLinkage* linkage = opengl_get_or_create_shader_program(render_state->vertex_shader, render_state->pixel_shader, instancing);
 		glUseProgram(linkage->program);
 		
 		glBindFramebuffer(GL_FRAMEBUFFER, render_state->render_target ? render_state->render_target->fbo : 0);
@@ -222,11 +257,27 @@ namespace Sparkles {
 		} else {
 			// #incomplete #robustness: Provide a helpful error message here.
 		}	
+		
+		GLuint use_texture_uniform_loc = glGetUniformLocation(linkage->program, "use_texture");
+		if (use_texture_uniform_loc >= 0) {
+			glUniform1i(use_texture_uniform_loc, render_state->texture0 != nullptr);
+		} else {
+			// #incomplete #robustness: Provide a helpful error message here.
+		}	
+		
+		
+		if (render_state->texture0) {
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, render_state->texture0->handle);
+		}
+		
+		glBindVertexArray(instancing ? default_instancing_vao : default_vao);
 	}
 	
 	static void opengl_reset_render_state() {
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glUseProgram(0);
+		glBindVertexArray(0);
 	}
 	
 	ParticleSystem* particle_system_create(uint32_t particle_count) {		
@@ -274,11 +325,9 @@ namespace Sparkles {
 			// Render 
 			// 
 			
-			// Bind the shader program
-			opengl_apply_render_state(render_state);
+			opengl_apply_render_state(render_state, true);
 			
 			// Bind the vertex format and mesh buffers
-			glBindVertexArray(default_instancing_vao);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ibo);
 			glBindVertexBuffer(0, mesh->vbo, 0, sizeof(Vertex));
 			glBindVertexBuffer(1, system_gl->instances_vbo, 0, sizeof(Particle));
@@ -286,8 +335,6 @@ namespace Sparkles {
 			// Draw all particles in a single draw call.
 			glDrawElementsInstanced(GL_TRIANGLES, mesh->index_count, GL_UNSIGNED_INT, (void*) 0, system->count);
 			
-			// Reset OpenGL state.
-			glBindVertexArray(0);
 			opengl_reset_render_state();
 		}
 	}
@@ -365,18 +412,15 @@ namespace Sparkles {
 	}
 	
 	void mesh_render(Mesh* mesh, RenderState* render_state) {
-		opengl_apply_render_state(render_state);
+		opengl_apply_render_state(render_state, false);
 		
 		// Bind the vertex format and mesh buffers
-		glBindVertexArray(default_vao);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ibo);
 		glBindVertexBuffer(0, mesh->vbo, 0, sizeof(Vertex));
 		
 		// Draw all particles in a single draw call.
 		glDrawElements(GL_TRIANGLES, mesh->index_count, GL_UNSIGNED_INT, (void*) 0);
 		
-		// Reset OpenGL state.
-		glBindVertexArray(0);
 		opengl_reset_render_state();
 		
 	}
@@ -417,6 +461,9 @@ namespace Sparkles {
 		glGenTextures(1, &handle);
 		glBindTexture(GL_TEXTURE_2D, handle);
 		glTexImage2D(GL_TEXTURE_2D, 0, format_info.gl_internal_format, width, height, 0, format_info.gl_format, format_info.gl_type, image_data);
+		
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glBindTexture(GL_TEXTURE_2D, 0);
 		
 		Texture* texture = new Texture; // #memory_cleanup

@@ -4,17 +4,10 @@
 #include <stdlib.h> // srand
 #include <time.h> // time
 
-#define _USE_MATH_DEFINES
-#include <cmath>
-// #include <math.h>
-#define PI M_PI
-#define TAU (2 * M_PI)
-
 // #include "sparkles.h"
 #include "sparkles_utils.h"
 
 namespace Sparkles {
-	
 	
 	Mesh* mesh_generate_regular_polygon(int number_of_sides) {
 		constexpr int MAX_VERTICES = 128;

@@ -4,6 +4,9 @@
 
 namespace Sparkles {
 	
+	static constexpr float PI  = 3.1415926f;
+	static constexpr float TAU = 6.2831853f;
+	
 	enum class Distribution {
 		UNIFORM, // Every value in the sample has the same chance of being chosen.
 	};

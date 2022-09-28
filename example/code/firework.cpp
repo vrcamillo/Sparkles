@@ -7,25 +7,15 @@ using namespace Sparkles;
 static ParticleSystem* system;
 
 static const char* hdr_pixel_shader_source = R"glsl(
-#version 330 core
+#version 410
 
-layout (location = 0) in vec3 vertex_position;
-layout (location = 1) in vec4 vertex_color;
-layout (location = 2) in vec2 vertex_uv;
-
-layout (location = 3) in vec3 instance_position;
-layout (location = 4) in float instance_scale;
-layout (location = 5) in vec4 instance_color;
-
-uniform mat4 projection;
-
-out vec4 pixel_color;
+in vec4 pixel_color;
+out vec4 result_color; 
 
 void main() {
-	vec4 world_position = vec4(instance_position + vertex_position * instance_scale, 1);
-	gl_Position = projection * world_position;
-	pixel_color = vertex_color * instance_color;
-}  
+	result_color = pixel_color;
+}
+
 )glsl";
 
 static RandomVec2 explosion_position = {
@@ -34,7 +24,7 @@ static RandomVec2 explosion_position = {
 	.y = {Distribution::UNIFORM, -0.5, +0.5},
 };
 
-static RandomScalar explosion_interval = {Distribution::UNIFORM, 0.25, 1};
+static RandomScalar explosion_interval = {Distribution::UNIFORM, 0.1, 0.2};
 static RandomScalar particles_per_explosion = {Distribution::UNIFORM, 50, 100};
 
 float explosion_accumulation_timer;
@@ -56,9 +46,9 @@ static SpawnParams spawn = {
 	
 	.color = {
 		.color_system = ColorSystem::RGB,
-		.red   = {Distribution::UNIFORM, 0.8, 1},
-		.green = {Distribution::UNIFORM, 0.3, 1},
-		.blue  = {Distribution::UNIFORM, 0.3, 1},
+		.red   = {Distribution::UNIFORM, 0.8, 2},
+		.green = {Distribution::UNIFORM, 0.3, 2},
+		.blue  = {Distribution::UNIFORM, 0.3, 2},
 		.alpha = {Distribution::UNIFORM, 0.8, 1},
 	},
 	
@@ -127,16 +117,19 @@ void firework_frame(float dt) {
 	
 	RenderState render_state;
 	render_state.render_target = hdr_render_target;
-	render_state.pixel_shader = hdr_pixel_shader;
+	// render_state.pixel_shader = hdr_pixel_shader;
 	render_state.projection = orthographic(-0.8f, +0.8f, +0.5f, -0.5f, -1, +1);
 	render_state.viewport = {0, 0, (float) render_target_width, (float) render_target_height};
 	
+	render_target_clear(hdr_render_target, {0, 0, 0, 1});
 	particle_system_upload_and_render(system, circle_mesh, &render_state);
 	
-	render_state.render_target = nullptr;
-	render_state.projection = mat4_identity();
-	render_state.viewport = {0, 0, (float) render_target_width, (float) render_target_height};
+	auto hdr_texture = render_target_flush(hdr_render_target);
 	
+	render_state.render_target = nullptr;
+	render_state.projection = orthographic(-0.5f, +0.5f, +0.5f, -0.5f, -1, +1);;
+	render_state.viewport = {0, 0, (float) render_target_width, (float) render_target_height};
+	render_state.texture0 = hdr_texture;
 	mesh_render(square_mesh, &render_state);
 	
 }

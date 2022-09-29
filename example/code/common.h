@@ -20,6 +20,8 @@ extern GLFWwindow* global_window;
 
 namespace Sparkles {
 	struct Mesh;
+	struct RandomScalar;
+	struct RandomColor;
 }
 extern Sparkles::Mesh* square_mesh;
 extern Sparkles::Mesh* circle_mesh;
@@ -27,3 +29,8 @@ extern Sparkles::Mesh* circle_mesh;
 // #temporary: Remove these.
 // #define min(a, b) (a < b) ? (a) : (b)
 // #define max(a, b) (a > b) ? (a) : (b)
+
+namespace ImGui {
+	void RandomEdit(const char* label, Sparkles::RandomScalar* scalar, float min, float max);
+	void RandomEdit(const char* label, Sparkles::RandomColor* color);
+}

@@ -40,6 +40,8 @@ namespace Sparkles {
 				RandomScalar radius;
 			};
 		};
+		
+		vec2 offset;
 	};
 	
 	struct RandomColor {
@@ -86,11 +88,12 @@ namespace Sparkles {
 		};
 	}
 	
-	constexpr RandomVec2 uniform2_polar(float angle_min, float angle_max, float radius_min, float radius_max) {
+	constexpr RandomVec2 uniform2_polar(float angle_min, float angle_max, float radius_min, float radius_max, vec2 offset = {}) {
 		return {
 			.coordinate_system = CoordinateSystem::POLAR,
 			.angle  = {Distribution::UNIFORM, angle_min, angle_max},
 			.radius = {Distribution::UNIFORM, radius_min, radius_max},
+			.offset = offset,
 		};
 	}
 	

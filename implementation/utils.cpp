@@ -121,13 +121,15 @@ namespace Sparkles {
 		  case CoordinateSystem::RECTANGULAR: {
 				float x = random_get(spec.x);
 				float y = random_get(spec.y);
-				return {x, y};
+				vec2 value = {x, y};
+				return value + spec.offset;
 			} break;
 			
 		  case CoordinateSystem::POLAR: {
 				float angle = random_get(spec.angle);
 				float radius = random_get(spec.radius);
-				return {radius * (float) cos(angle), radius * (float) sin(angle)};
+				vec2 value = {radius * (float) cos(angle), radius * (float) sin(angle)};
+				return value + spec.offset;
 			} break;
 			
 		  default: assert(false);

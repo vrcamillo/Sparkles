@@ -23,6 +23,7 @@
 #endif
 
 #include "common.h"
+
 void system_sleep_ms(int milliseconds);
 
 GLFWwindow* global_window;

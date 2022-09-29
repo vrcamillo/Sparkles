@@ -58,4 +58,30 @@ void do_frame() {
 	}
 }
 
+void ImGui::RandomEdit(const char* label, Sparkles::RandomScalar* scalar, float min, float max) {
+	ImGui::Text(label);
+	ImGui::Indent();
+	ImGui::PushID(scalar);
+	ImGui::SliderFloat("Min", &scalar->min, min, max);
+	ImGui::SliderFloat("Max", &scalar->max, min, max);
+	ImGui::PopID();
+	ImGui::Unindent();
+}
 
+
+void ImGui::RandomEdit(const char* label, Sparkles::RandomColor* color) {	
+	vec4 color_min = {color->red.min, color->green.min, color->blue.min, color->alpha.min};
+	vec4 color_max = {color->red.max, color->green.max, color->blue.max, color->alpha.max};	
+	
+	ImGui::Text(label);
+	ImGui::Indent();
+	
+	ImGui::PushID(color);
+	ImGui::ColorEdit4("Min", &color_min.x, ImGuiColorEditFlags_DisplayRGB);
+	// ImGui::SameLine();
+	ImGui::ColorEdit4("Max", &color_max.x, ImGuiColorEditFlags_DisplayRGB);
+	ImGui::PopID();
+	ImGui::Unindent();
+	
+	*color = uniform_rgba(color_min, color_max);	
+}

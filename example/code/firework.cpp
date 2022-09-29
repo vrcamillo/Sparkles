@@ -8,20 +8,20 @@ using namespace Sparkles;
 ParticleSystem* system;
 
 struct Params {
-	RandomVec2   explosion_position = uniform2_rect({-0.05, -0.05}, {+0.05, +0.05});
-	RandomScalar explosion_interval = uniform1(0.25, 1);
-	RandomScalar particles_per_explosion = uniform1(50, 100);
+	RandomVec2   explosion_position = uniform2_rect({-0.01, -0.01}, {+0.01, +0.01});
+	RandomScalar explosion_interval = uniform1(2, 3);
+	RandomScalar particles_per_explosion = uniform1(300, 700);
 	
 	ParticlePhysicsParams physics = {
-		.gravity = {0, -1},
+		.gravity = {0, -0.2},
 		.friction = 0.99,
 	};
 	
 	ParticleSpawnParams spawn = {
-		.position = uniform2_polar(0, TAU, 0, 0.1),
+		.position = uniform2_polar(0, TAU, 0, 0.01),
 		.scale    = uniform1(0.01, 0.10),
-		.color    = uniform_rgba({0.8, 0.5, 0.5, 0.8}, {2, 1.5, 1.5, 1}),
-		.velocity = uniform2_polar(0, TAU, 3, 5),
+		.color    = uniform_rgba({0.8, 0.2, 0.2, 1}, {1, 0.4, 0.4, 2}),
+		.velocity = uniform2_polar(0, TAU, 0, 2),
 		.life     = uniform1(0.5, 2),
 	};
 };
@@ -34,8 +34,6 @@ float next_explosion_interval;
 RenderTarget* hdr_render_target;
 int render_target_width;
 int render_target_height;
-
-Shader* hdr_pixel_shader;
 
 Texture* light_mask;
 
@@ -92,8 +90,11 @@ void firework_frame(float dt) {
 	render_state.viewport = {0, 0, (float) render_target_width, (float) render_target_height};
 	render_state.texture0 = light_mask;
 	
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE); // #temporary
 	render_target_clear(hdr_render_target, {0, 0, 0, 1});
-	particle_system_upload_and_render(system, square_mesh, &render_state);
+	particle_system_upload_and_render(system, circle_mesh, &render_state);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // #temporary: Reset default opengl state
+
 	
 	auto hdr_texture = render_target_flush(hdr_render_target);
 	
@@ -101,6 +102,17 @@ void firework_frame(float dt) {
 	render_state.projection = orthographic(-0.5f, +0.5f, +0.5f, -0.5f, -1, +1);;
 	render_state.viewport = {0, 0, (float) render_target_width, (float) render_target_height};
 	render_state.texture0 = hdr_texture;
-	mesh_render(circle_mesh, &render_state);
+	mesh_render(square_mesh, &render_state);
+	
+	ImGui::RandomEdit("Number of particles", &params.particles_per_explosion, 0, 1000);
+	ImGui::RandomEdit("Interval", &params.explosion_interval, 1, 10);
+	ImGui::RandomEdit("Color", &params.spawn.color);
+	ImGui::RandomEdit("Life", &params.spawn.life, 0, 5);
+	ImGui::RandomEdit("Size", &params.spawn.scale, 0, 1);
+	
+	ImGui::Separator();
+	
+	ImGui::InputFloat("Gravity", &params.physics.gravity.y, -1, 1);
+	ImGui::SliderFloat("Friction", &params.physics.friction, 0, 1);
 	
 }

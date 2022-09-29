@@ -38,6 +38,8 @@ Check __[this link](https://learn.microsoft.com/en-us/cpp/build/building-on-the-
 
 In the near future, I will add screenshots, and more informative descriptions here. 
 
+<img src="/example/images/firework1.gif" width="250" height="250"/>
+
 ## Roadmap
 
 This demo is currently in development. 

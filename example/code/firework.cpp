@@ -4,62 +4,32 @@
 #include "sparkles_utils.h"
 using namespace Sparkles;
 
-static ParticleSystem* system;
+// Particle parameters
+ParticleSystem* system;
 
-static const char* hdr_pixel_shader_source = R"glsl(
-#version 410
-
-in vec4 pixel_color;
-out vec4 result_color; 
-
-void main() {
-	result_color = pixel_color;
-}
-
-)glsl";
-
-static RandomVec2 explosion_position = {
-	.coordinate_system = CoordinateSystem::RECTANGULAR,
-	.x = {Distribution::UNIFORM, -0.5, +0.5},
-	.y = {Distribution::UNIFORM, -0.5, +0.5},
+struct Params {
+	RandomVec2   explosion_position = uniform2_rect({-0.05, -0.05}, {+0.05, +0.05});
+	RandomScalar explosion_interval = uniform1(0.25, 1);
+	RandomScalar particles_per_explosion = uniform1(50, 100);
+	
+	ParticlePhysicsParams physics = {
+		.gravity = {0, -1},
+		.friction = 0.99,
+	};
+	
+	ParticleSpawnParams spawn = {
+		.position = uniform2_polar(0, TAU, 0, 0.1),
+		.scale    = uniform1(0.01, 0.10),
+		.color    = uniform_rgba({0.8, 0.5, 0.5, 0.8}, {2, 1.5, 1.5, 1}),
+		.velocity = uniform2_polar(0, TAU, 3, 5),
+		.life     = uniform1(0.5, 2),
+	};
 };
 
-static RandomScalar explosion_interval = {Distribution::UNIFORM, 0.1, 0.2};
-static RandomScalar particles_per_explosion = {Distribution::UNIFORM, 50, 100};
+Params params;
 
 float explosion_accumulation_timer;
 float next_explosion_interval;
-
-static PhysicsParams physics = {
-	.gravity = {0, -1},
-	.friction = 0.99,
-};
-
-static SpawnParams spawn = {
-	.position = {
-		.coordinate_system = CoordinateSystem::POLAR,
-		.angle = {Distribution::UNIFORM, 0, PI * 2.0f},
-		.radius = {Distribution::UNIFORM, 0, 0.1f},
-	},
-	
-	.scale = {Distribution::UNIFORM, 0.001, 0.05},
-	
-	.color = {
-		.color_system = ColorSystem::RGB,
-		.red   = {Distribution::UNIFORM, 0.8, 2},
-		.green = {Distribution::UNIFORM, 0.3, 2},
-		.blue  = {Distribution::UNIFORM, 0.3, 2},
-		.alpha = {Distribution::UNIFORM, 0.8, 1},
-	},
-	
-	.velocity = {
-		.coordinate_system = CoordinateSystem::POLAR,
-		.angle = {Distribution::UNIFORM, 0, PI * 2.0f},
-		.radius = {Distribution::UNIFORM, 4, 5},
-	},
-	
-	.life = {Distribution::UNIFORM, 0.5, 2},
-};
 
 RenderTarget* hdr_render_target;
 int render_target_width;
@@ -67,62 +37,63 @@ int render_target_height;
 
 Shader* hdr_pixel_shader;
 
+Texture* light_mask;
+
 void firework_init() {	
 	system = particle_system_create(1000);
 	
 	for (int i = 0; i < system->count; i += 1) {
 		Particle* p = &system->particles[i];
-		particle_spawn(p, &spawn);
+		particle_spawn(p, &params.spawn);
 		p->scale = 0;
 	}
 	
-	next_explosion_interval = random_get(explosion_interval);
+	next_explosion_interval = random_get(params.explosion_interval);
 	
 	// Create our hdr render target the same size as our backbuffer.
 	glfwGetFramebufferSize(global_window, &render_target_width, &render_target_height);
 	hdr_render_target = render_target_create(TextureFormat::RGBA_FLOAT16, render_target_width, render_target_height);
 	
-	hdr_pixel_shader = shader_create(ShaderLanguage::GLSL, ShaderType::PIXEL, hdr_pixel_shader_source);
-	
+	light_mask = texture_generate_light_mask(32, 32, 0.01, 10);
 }
 
 void firework_frame(float dt) {
 	explosion_accumulation_timer += dt;
 	
 	if (explosion_accumulation_timer > next_explosion_interval) {
-		vec2 spawn_position = random_get(explosion_position);
-		int remaining_particles_to_spawn = (int) random_get(particles_per_explosion);
+		vec2 spawn_position = random_get(params.explosion_position);
+		int remaining_particles_to_spawn = (int) random_get(params.particles_per_explosion);
 		
 		for (int i = 0; i < system->count && remaining_particles_to_spawn > 0; i += 1) {
 			Particle* p = &system->particles[i];
 			if (p->life < 0) {
-				particle_spawn(p, &spawn);
+				particle_spawn(p, &params.spawn);
 				p->position.xy += spawn_position;
 				remaining_particles_to_spawn -= 1;
 			}
 		}
 		
-		next_explosion_interval = random_get(explosion_interval);
+		next_explosion_interval = random_get(params.explosion_interval);
 		explosion_accumulation_timer = 0;
 	}
 	
 	for (int i = 0; i < system->count; i += 1) {
 		Particle* p = &system->particles[i];
-		particle_simulate(p, &physics, dt);
+		particle_simulate(p, &params.physics, dt);
 		
 		if (p->life < 0) p->scale = 0;
 		
-		p->color.w *= 0.95;
+		p->color.w = fmin(p->color.w, p->life);
 	}
 	
 	RenderState render_state;
 	render_state.render_target = hdr_render_target;
-	// render_state.pixel_shader = hdr_pixel_shader;
 	render_state.projection = orthographic(-0.8f, +0.8f, +0.5f, -0.5f, -1, +1);
 	render_state.viewport = {0, 0, (float) render_target_width, (float) render_target_height};
+	render_state.texture0 = light_mask;
 	
 	render_target_clear(hdr_render_target, {0, 0, 0, 1});
-	particle_system_upload_and_render(system, circle_mesh, &render_state);
+	particle_system_upload_and_render(system, square_mesh, &render_state);
 	
 	auto hdr_texture = render_target_flush(hdr_render_target);
 	
@@ -130,6 +101,6 @@ void firework_frame(float dt) {
 	render_state.projection = orthographic(-0.5f, +0.5f, +0.5f, -0.5f, -1, +1);;
 	render_state.viewport = {0, 0, (float) render_target_width, (float) render_target_height};
 	render_state.texture0 = hdr_texture;
-	mesh_render(square_mesh, &render_state);
+	mesh_render(circle_mesh, &render_state);
 	
 }

@@ -10,17 +10,12 @@ using namespace Sparkles;
 RandomVec2 spawn_position_spec;
 ParticleSystem* water_particles;
 
-// #temporary: Remove these.
-#define min(a, b) (a < b) ? (a) : (b)
-#define max(a, b) (a > b) ? (a) : (b)
-
-
-PhysicsParams physics = {
+ParticlePhysicsParams physics = {
 	.gravity = {0, -2},
 	.friction = 1,
 };
 
-SpawnParams spawn = {
+ParticleSpawnParams spawn = {
 	.position = {
 		.coordinate_system = CoordinateSystem::POLAR, 
 		.angle  = {Distribution::UNIFORM, 0, TAU},
@@ -71,7 +66,7 @@ void waterfall_frame(float dt) {
 	for (int i = 0; i < water_particles->count; i += 1) {
 		Particle* p = &water_particles->particles[i];
 		particle_simulate(p, &physics, dt);
-		p->color.w = min(p->life, p->color.w);
+		p->color.w = fmin(p->life, p->color.w);
 	}
 	
 	// Upload and render

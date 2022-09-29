@@ -23,3 +23,7 @@ namespace Sparkles {
 }
 extern Sparkles::Mesh* square_mesh;
 extern Sparkles::Mesh* circle_mesh;
+
+// #temporary: Remove these.
+// #define min(a, b) (a < b) ? (a) : (b)
+// #define max(a, b) (a > b) ? (a) : (b)

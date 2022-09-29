@@ -120,6 +120,8 @@ namespace Sparkles {
 		
 		RGBA_UINT8,
 		RGBA_FLOAT16,
+		
+		ALPHA_FLOAT32,
 	};
 	
 	// These structs are defined by the graphics backend.

@@ -61,7 +61,7 @@ namespace Sparkles {
 		RandomScalar alpha;
 	};
 	
-	struct SpawnParams {
+	struct ParticleSpawnParams {
 		RandomVec2 position;
 		RandomScalar scale;
 		RandomColor color;
@@ -69,20 +69,52 @@ namespace Sparkles {
 		RandomScalar life;
 	};
 	
-	struct PhysicsParams {
+	struct ParticlePhysicsParams {
 		vec3 gravity;
 		float friction;
 	};
 	
+	constexpr RandomScalar uniform1(float min, float max) {
+		return {Distribution::UNIFORM, min, max};
+	}
+	
+	constexpr RandomVec2 uniform2_rect(vec2 min, vec2 max) {
+		return {
+			.coordinate_system = CoordinateSystem::RECTANGULAR,
+			.x = {Distribution::UNIFORM, min.x, max.x},
+			.y = {Distribution::UNIFORM, min.y, max.y},
+		};
+	}
+	
+	constexpr RandomVec2 uniform2_polar(float angle_min, float angle_max, float radius_min, float radius_max) {
+		return {
+			.coordinate_system = CoordinateSystem::POLAR,
+			.angle  = {Distribution::UNIFORM, angle_min, angle_max},
+			.radius = {Distribution::UNIFORM, radius_min, radius_max},
+		};
+	}
+	
+	constexpr RandomColor uniform_rgba(vec4 color_min, vec4 color_max) {
+		return {
+			.color_system = ColorSystem::RGB,
+			.red   = {Distribution::UNIFORM, color_min.x, color_max.x},
+			.green = {Distribution::UNIFORM, color_min.y, color_max.y},
+			.blue  = {Distribution::UNIFORM, color_min.z, color_max.z},
+			.alpha = {Distribution::UNIFORM, color_min.w, color_max.w},
+		};
+	}
+	
 	// 
 	// Simple simulation functions
 	//
-	void particle_simulate(Particle* particle, PhysicsParams* physics, float dt);
-	void particle_spawn(Particle* particle, SpawnParams* spawn);
+	void particle_simulate(Particle* particle, ParticlePhysicsParams* physics, float dt);
+	void particle_spawn(Particle* particle, ParticleSpawnParams* spawn);
 	
 	//
 	// Texture generation function
 	//
+	
+	Texture* texture_generate_light_mask(int width, int height, float brightness_factor, float brightness_cap);
 	
 	//
 	// Mesh generation functions

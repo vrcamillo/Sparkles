@@ -429,10 +429,17 @@ namespace Sparkles {
 		GLenum gl_format;
 		GLenum gl_internal_format;
 		GLenum gl_type;
+		GLint gl_swizzle[4];
 	};
 	
 	static OpenGLTextureFormatInfo opengl_get_texture_format_info(TextureFormat format) {
 		OpenGLTextureFormatInfo info = {};
+		
+		info.gl_swizzle[0] = GL_RED;
+		info.gl_swizzle[1] = GL_GREEN;
+		info.gl_swizzle[2] = GL_BLUE;
+		info.gl_swizzle[3] = GL_ALPHA;
+		
 		
 		switch (format) {
 		  case TextureFormat::RGBA_UINT8: {
@@ -445,6 +452,17 @@ namespace Sparkles {
 				info.gl_internal_format = GL_RGBA16F; 
 				info.gl_type = GL_HALF_FLOAT;
 				info.gl_format = GL_RGBA;
+			} break;
+			
+		  case TextureFormat::ALPHA_FLOAT32: {
+				info.gl_internal_format = GL_R32F; 
+				info.gl_type = GL_FLOAT;
+				info.gl_format = GL_RED;
+				
+				info.gl_swizzle[0] = GL_ONE;
+				info.gl_swizzle[1] = GL_ONE;
+				info.gl_swizzle[2] = GL_ONE;
+				info.gl_swizzle[3] = GL_RED;
 			} break;
 			
 		  default: 
@@ -464,6 +482,8 @@ namespace Sparkles {
 		
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, format_info.gl_swizzle);
+		
 		glBindTexture(GL_TEXTURE_2D, 0);
 		
 		Texture* texture = new Texture; // #memory_cleanup

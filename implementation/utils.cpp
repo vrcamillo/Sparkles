@@ -71,6 +71,27 @@ namespace Sparkles {
 		return result;
 	}
 	
+	Texture* texture_generate_light_mask(int width, int height, float brightness_factor, float brightness_cap) {
+		float* data = new float[width * height]; // #memory_cleanup
+		
+		for (int j = 0; j < height; j += 1) {
+			for (int i = 0; i < width; i += 1) {
+				float x = (i / (width * 0.5))  - 1.0f;
+				float y = (j / (height * 0.5)) - 1.0f;
+				float r2 = x * x + y * y;
+				float value = brightness_factor / r2;
+				if (value > brightness_cap) value = brightness_cap;
+				
+				data[i + j * width] = value;
+			}
+		}
+		
+		Texture* result = texture_create(TextureFormat::ALPHA_FLOAT32, width, height, data);
+		delete[] data;
+		
+		return result;
+	}
+	
 	float random_get_uniform() {
 		
 		static bool first = true;
@@ -137,14 +158,14 @@ namespace Sparkles {
 	}
 	
 	
-	void particle_simulate(Particle* p, PhysicsParams* physics, float dt) {
+	void particle_simulate(Particle* p, ParticlePhysicsParams* physics, float dt) {
 		p->velocity += physics->gravity * dt;
 		p->position += p->velocity * dt;
 		p->velocity *= physics->friction; // #temporary: This should not be frame rate dependant!
 		p->life -= dt;
 	}
 	
-	void particle_spawn(Particle* p, SpawnParams* spawn) {
+	void particle_spawn(Particle* p, ParticleSpawnParams* spawn) {
 		p->position.xy = random_get(spawn->position);
 		p->position.z = 0;
 		p->scale = random_get(spawn->scale);

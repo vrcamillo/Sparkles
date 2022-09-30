@@ -18,11 +18,15 @@ struct Example {
 void firework_init();
 void firework_frame(float dt);
 
+void bomb_init();
+void bomb_frame(float dt);
+
 const Example examples[] = {
 	{"Fireworks!", firework_init, firework_frame},
+	{"Bomb!", bomb_init, bomb_frame},
 };
 
-int current_example_index = 0;
+int current_example_index = 1;
 
 bool initialize() {
 	Sparkles::initialize();

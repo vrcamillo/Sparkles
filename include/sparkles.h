@@ -4,7 +4,7 @@
 
 #ifndef SPARKLES_ASSERT
 #include <assert.h>
-#define SPARKLES_ASSERT(condition) assert(condition)
+#define SPARKLES_ASSERT(condition) assert((condition));
 #endif
 
 #ifndef SPARKLES_LOG

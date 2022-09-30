@@ -49,6 +49,13 @@ namespace Sparkles {
 		vec4 max = {1, 1, 1, 1};
 	};
 	
+	struct CubicBezier {
+		vec2 p0;
+		vec2 p1;
+		vec2 c0;
+		vec2 c1;
+	};
+	
 	struct ParticleSpawnParams {
 		Range2 position;
 		Range1 scale;
@@ -73,6 +80,7 @@ namespace Sparkles {
 	//
 	Mesh* mesh_generate_regular_polygon(int number_of_sides);
 	Mesh* mesh_generate_quad(vec2 p0, vec2 p1);
+	Mesh* mesh_generate_bezier(CubicBezier curve, int number_of_points, float line_width);
 	
 	//
 	// Random number generator functions
@@ -84,9 +92,10 @@ namespace Sparkles {
 	vec4 random_get4(Range4 range);
 	
 	// Math functions
-	mat4 mat4_identity();
 	
-#if !SPARKLES_USER_MATH_TYPES // If the user didn't define their vector types, we provide operator overloads for our vectors for convenience.
+#if !SPARKLES_USER_MATH_TYPES 
+	// If the user didn't define their vector types, we provide operator overloads for our vectors for convenience.
+	
 	// vec2
 	vec2 operator+(vec2 a, vec2 b);
 	vec2 operator-(vec2 a, vec2 b);
@@ -149,7 +158,24 @@ namespace Sparkles {
 	mat4 operator*(mat4 a, mat4 b);
 	
 #endif
-
+	
+	float norm2(vec2 v);
+	
+	float norm(vec2 v);
+	
+	vec2 normalize(vec2 v);
+	
+	vec2 lerp(vec2 a, vec2 b, float t);
+	vec3 lerp(vec3 a, vec3 b, float t);
+	vec4 lerp(vec4 a, vec4 b, float t);
+	
+	vec2 rotate2(vec2 v, float radians);
+	
+	vec2 bezier_get_position(CubicBezier curve, float t);
+	vec2 bezier_get_tangent(CubicBezier curve, float t);
+	float bezier_get_length(CubicBezier curve, float start_t = 0, float end_t = 1, float dt = 0.01);
+	
+	mat4 mat4_identity();
 	mat4 orthographic(float left, float right, float top, float bottom, float near, float far);
 	
 }

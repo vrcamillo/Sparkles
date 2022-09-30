@@ -71,6 +71,49 @@ namespace Sparkles {
 		return result;
 	}
 	
+	Mesh* mesh_generate_bezier(CubicBezier curve, int number_of_points, float line_width) {
+		
+		// SPARKLES_ASSERT(number_of_points < 50);
+		// SPARKLES_ASSERT(vertex_cursor < 256);
+		// SPARKLES_ASSERT(index_cursor < 512);
+		
+		Vertex vertices[256];
+		uint32_t indices[512];
+		
+		uint32_t vertex_cursor = 0;
+		uint32_t index_cursor = 0;
+		
+		float dt = 1.0f / number_of_points;
+		for (int i = 0; i < number_of_points; i += 1) {
+			float t = dt * i;
+			vec2 center = bezier_get_position(curve, t);
+			vec2 tangent = normalize(bezier_get_tangent(curve, t));
+			vec2 offset = (line_width * 0.5f) * rotate2(tangent, TAU * 0.25);
+			
+			vec2 p0 = center + offset;
+			vec2 p1 = center - offset;
+
+			vertices[vertex_cursor + 0] = {.position = {p0.x, p0.y, 0}, .color = {1, 1, 1, 1}, .uv = {0, 0}};		
+			vertices[vertex_cursor + 1] = {.position = {p1.x, p1.y, 0}, .color = {1, 1, 1, 1}, .uv = {0, 0}};
+			
+			if (i < number_of_points - 1) {
+				indices[index_cursor + 0] = vertex_cursor + 0;
+				indices[index_cursor + 1] = vertex_cursor + 1;
+				indices[index_cursor + 2] = vertex_cursor + 2;
+				
+				indices[index_cursor + 3] = vertex_cursor + 1;
+				indices[index_cursor + 4] = vertex_cursor + 2;
+				indices[index_cursor + 5] = vertex_cursor + 3;
+			}
+			
+			vertex_cursor += 2;
+			index_cursor += 6;
+		}
+				
+		Mesh* result = mesh_create(vertex_cursor, index_cursor, vertices, indices);
+		return result;
+	}
+	
 	Texture* texture_generate_light_mask(int width, int height, float brightness_factor, float brightness_cap) {
 		float* data = new float[width * height]; // #memory_cleanup
 		
@@ -195,7 +238,75 @@ namespace Sparkles {
 		p->velocity.xy = random_get2(spawn->velocity) * 0.2;
 		p->life = random_get1(spawn->life);
 	}
+	
+	float norm2(vec2 v) {
+		return v.x * v.x + v.y * v.y;
+	}
+	
+	float norm(vec2 v) {
+		return sqrt(v.x * v.x + v.y * v.y);		
+	}
 
+	vec2 normalize(vec2 v) {
+		float length = norm(v);
+		v.x /= length;
+		v.y /= length;
+		return v;
+	}
+	
+	vec2 lerp(vec2 a, vec2 b, float t) {
+		return (1 - t) * a + t * b;
+	}
+	
+	vec3 lerp(vec3 a, vec3 b, float t) {
+		return (1 - t) * a + t * b;
+	}
+	
+	vec4 lerp(vec4 a, vec4 b, float t) {
+		return (1 - t) * a + t * b;
+	}
+	
+	vec2 rotate2(vec2 v, float radians) {
+		float s = sin(radians);
+		float c = cos(radians);
+		return {c * v.x - s * v.y, s * v.x + c * v.y};
+	}
+	
+	vec2 bezier_get_position(CubicBezier curve, float t) {
+		
+		float t2 = t * t;
+		float t3 = t2 * t;
+		
+		float s = 1 - t;
+		float s2 = s * s;
+		float s3 = s2 * s;
+		
+		vec2 p0 = curve.p0;
+		vec2 p1 = curve.p0 + curve.c0;
+		vec2 p2 = curve.p1 + curve.c1;
+		vec2 p3 = curve.p1;
+		
+		return (s3) * p0 + (3 * s2 * t) * p1 + (3 * s * t2) * p2 + t3 * p3;
+	}
+	
+	vec2 bezier_get_tangent(CubicBezier curve, float t) {
+		float t2 = t * t;
+		
+		float s = 1 - t;
+		float s2 = s * s;
+		
+		vec2 p0 = curve.p0;
+		vec2 p1 = curve.p0 + curve.c0;
+		vec2 p2 = curve.p1 + curve.c1;
+		vec2 p3 = curve.p1;
+		
+		return (3 * s2) * (p1 - p0) + (6 * s * t) * (p2 - p1) + (3 * t2) * (p3 - p2);
+	}
+	
+	float bezier_get_length(CubicBezier curve, float start_t, float end_t, float dt) {
+		return 0;
+	}
+	
 	mat4 mat4_identity() {
 		return {
 			1, 0, 0, 0,

@@ -4,10 +4,11 @@
 #include "sparkles_utils.h"
 using namespace Sparkles;
 
+static ParticleSystem* system;
+
 //
 // Particle system parameters 
 //
-ParticleSystem* system;
 constexpr int max_particle_count = 5000;
 
 struct Params {

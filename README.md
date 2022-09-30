@@ -36,9 +36,11 @@ Check __[this link](https://learn.microsoft.com/en-us/cpp/build/building-on-the-
 
 (Right now, we only support Windows, but we will eventually support other platforms as well).
 
-In the near future, I will add screenshots, and more informative descriptions here. 
+### Fireworks!
 
-<img src="/example/images/firework1.gif" width="250" height="250"/>
+<img src="/example/images/firework2.gif" height="500"/>
+
+In the near future, new examples will be added here.
 
 ## Roadmap
 

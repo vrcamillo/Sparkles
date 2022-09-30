@@ -53,27 +53,3 @@ void do_frame() {
 		current_example.frame_function(global_time.dt);
 	}
 }
-void RangeEdit(const char* label, Sparkles::Range2* range);
-
-
-void ImGui::RangeEdit(const char* label, Sparkles::Range1* range, float min, float max) {
-	ImGui::Text(label);
-	ImGui::Indent();
-	ImGui::PushID(range);
-	ImGui::SliderFloat("Min", &range->min, min, max);
-	ImGui::SliderFloat("Max", &range->max, min, max);
-	ImGui::PopID();
-	ImGui::Unindent();
-}
-
-
-void ImGui::RangeEdit(const char* label, Sparkles::Range4* range) {
-	ImGui::Text(label);
-	ImGui::Indent();
-	
-	ImGui::PushID(range);
-	ImGui::ColorEdit4("Min", (float*) &range->min, ImGuiColorEditFlags_DisplayRGB);
-	ImGui::ColorEdit4("Max", (float*) &range->max, ImGuiColorEditFlags_DisplayRGB);
-	ImGui::PopID();
-	ImGui::Unindent();
-}

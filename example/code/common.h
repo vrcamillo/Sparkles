@@ -28,8 +28,3 @@ extern Sparkles::Mesh* circle_mesh;
 // #temporary: Remove these.
 // #define min(a, b) (a < b) ? (a) : (b)
 // #define max(a, b) (a > b) ? (a) : (b)
-
-namespace ImGui {
-	void RangeEdit(const char* label, Sparkles::Range1* range, float min, float max);
-	void RangeEdit(const char* label, Sparkles::Range4* range);
-}

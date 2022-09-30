@@ -40,12 +40,12 @@ int main() {
 	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
 	const GLFWvidmode* vidmode = glfwGetVideoMode(monitor);
 	
-	int window_width = (int) (vidmode->width);
-	int window_height = (int) (vidmode->height);
+	int window_width = (int) (vidmode->width * 0.75);
+	int window_height = (int) (vidmode->height * 0.75);
 	
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
-	glfwWindowHint(GLFW_MAXIMIZED, true);
+	// glfwWindowHint(GLFW_MAXIMIZED, true);
 	
 	global_window = glfwCreateWindow(window_width, window_height, "Sparkles!", nullptr, nullptr);
 	
@@ -70,7 +70,7 @@ int main() {
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO();
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-
+		
 		io.IniFilename = nullptr; // Remove annoying ini file.
 		io.Fonts->AddFontFromMemoryCompressedTTF(default_font_data, default_font_data_size, 16.0f); // Remove ugly default imgui font.
 		

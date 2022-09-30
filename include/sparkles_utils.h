@@ -7,13 +7,15 @@ namespace Sparkles {
 	static constexpr float PI  = 3.1415926f;
 	static constexpr float TAU = 6.2831853f;
 	
-	enum class Distribution {
-		UNIFORM, // Every value in the sample has the same chance of being chosen.
+	enum class Coords2D {
+		CARTESIAN,
+		POLAR,
 	};
 	
-	enum class CoordinateSystem {
-		RECTANGULAR,
-		POLAR,
+	enum class Coords3D {
+		CARTESIAN,
+		CYLINDRICAL,
+		SPHERICAL,
 	};
 	
 	enum class ColorSystem {
@@ -21,96 +23,43 @@ namespace Sparkles {
 		HSB,
 	};
 	
-	struct RandomScalar {
-		Distribution distribution;
-		float min;
-		float max;
+	struct Range1 {
+		float min = 0;
+		float max = 1;
 	};
 	
-	struct RandomVec2 {
-		CoordinateSystem coordinate_system;
-		
-		union {
-			struct {
-				RandomScalar x;
-				RandomScalar y;
-			};
-			struct {
-				RandomScalar angle;
-				RandomScalar radius;
-			};
-		};
-		
-		vec2 offset;
+	struct Range2 {
+		vec2 min = {0, 0};
+		vec2 max = {1, 1};
+		Coords2D coords = Coords2D::CARTESIAN;
 	};
 	
-	struct RandomColor {
-		ColorSystem color_system;
-		
-		union {
-			struct {
-				RandomScalar red;
-				RandomScalar green;
-				RandomScalar blue;
-			};
-			struct {
-				RandomScalar hue;
-				RandomScalar saturation;
-				RandomScalar brightness;
-			};
-		};
-		
-		RandomScalar alpha;
+	constexpr Range2 polar(float min_radius, float max_radius, float min_angle, float max_angle) {
+		return {{min_radius, min_angle}, {max_radius, max_angle}, Coords2D::POLAR};
+	}
+	
+	struct Range3 {
+		vec3 min = {0, 0, 0};
+		vec3 max = {1, 1, 1};
+		Coords3D coords = Coords3D::CARTESIAN;
+	};
+	
+	struct Range4 {
+		vec4 min = {0, 0, 0, 0};
+		vec4 max = {1, 1, 1, 1};
 	};
 	
 	struct ParticleSpawnParams {
-		RandomVec2 position;
-		RandomScalar scale;
-		RandomColor color;
-		RandomVec2 velocity;
-		RandomScalar life;
+		Range2 position;
+		Range1 scale;
+		Range4 color;
+		Range2 velocity;
+		Range1 life;
 	};
-	
-	struct ParticlePhysicsParams {
-		vec3 gravity;
-		float friction;
-	};
-	
-	constexpr RandomScalar uniform1(float min, float max) {
-		return {Distribution::UNIFORM, min, max};
-	}
-	
-	constexpr RandomVec2 uniform2_rect(vec2 min, vec2 max) {
-		return {
-			.coordinate_system = CoordinateSystem::RECTANGULAR,
-			.x = {Distribution::UNIFORM, min.x, max.x},
-			.y = {Distribution::UNIFORM, min.y, max.y},
-		};
-	}
-	
-	constexpr RandomVec2 uniform2_polar(float angle_min, float angle_max, float radius_min, float radius_max, vec2 offset = {}) {
-		return {
-			.coordinate_system = CoordinateSystem::POLAR,
-			.angle  = {Distribution::UNIFORM, angle_min, angle_max},
-			.radius = {Distribution::UNIFORM, radius_min, radius_max},
-			.offset = offset,
-		};
-	}
-	
-	constexpr RandomColor uniform_rgba(vec4 color_min, vec4 color_max) {
-		return {
-			.color_system = ColorSystem::RGB,
-			.red   = {Distribution::UNIFORM, color_min.x, color_max.x},
-			.green = {Distribution::UNIFORM, color_min.y, color_max.y},
-			.blue  = {Distribution::UNIFORM, color_min.z, color_max.z},
-			.alpha = {Distribution::UNIFORM, color_min.w, color_max.w},
-		};
-	}
 	
 	// 
 	// Simple simulation functions
 	//
-	void particle_simulate(Particle* particle, ParticlePhysicsParams* physics, float dt);
 	void particle_spawn(Particle* particle, ParticleSpawnParams* spawn);
 	
 	//
@@ -128,10 +77,11 @@ namespace Sparkles {
 	//
 	// Random number generator functions
 	//
-	float random_get_uniform();
-	float random_get(RandomScalar spec);
-	vec2 random_get(RandomVec2 spec);
-	vec4 random_get(RandomColor spec);
+	float random_get();
+	float random_get1(Range1 range);
+	vec2 random_get2(Range2 range);
+	vec3 random_get3(Range3 range);
+	vec4 random_get4(Range4 range);
 	
 	// Math functions
 	mat4 mat4_identity();

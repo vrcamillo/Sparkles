@@ -73,7 +73,8 @@ void main() {
 
 namespace Sparkles {	
 	
-	// Here we define our custom graphics data structures, which are forward declared  in "sparkles.h"
+	// Here we define our custom graphics data structures, which are forward declared in "sparkles.h"
+	
 	struct Mesh {
 		GLuint vbo = 0; // Vertex buffer object
 		GLuint ibo = 0; // Index buffer object
@@ -85,11 +86,11 @@ namespace Sparkles {
 		GLuint handle = 0; // OpenGL shader handle.
 	};
 	
-	struct Texture {
+	struct Texture_GL : Texture {
 		GLuint handle = 0; // OpenGL texture handle.
 	};
 	
-	struct RenderTarget {
+	struct RenderTarget_GL : RenderTarget {
 		GLuint fbo = 0; // Framebuffer buffer object.
 		Texture* color_attachment;
 	};
@@ -245,7 +246,8 @@ namespace Sparkles {
 		ShaderLinkage* linkage = opengl_get_or_create_shader_program(render_state->vertex_shader, render_state->pixel_shader, instancing);
 		glUseProgram(linkage->program);
 		
-		glBindFramebuffer(GL_FRAMEBUFFER, render_state->render_target ? render_state->render_target->fbo : 0);
+		auto render_target_gl = (RenderTarget_GL*) render_state->render_target;
+		glBindFramebuffer(GL_FRAMEBUFFER, render_target_gl ? render_target_gl->fbo : 0);
 		
 		Rect viewport = render_state->viewport;
 		glViewport(viewport.x, viewport.y, viewport.w, viewport.h);
@@ -267,8 +269,10 @@ namespace Sparkles {
 		
 		
 		if (render_state->texture0) {
+			auto texture0_gl = (Texture_GL*) render_state->texture0;
+			
 			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, render_state->texture0->handle);
+			glBindTexture(GL_TEXTURE_2D, texture0_gl->handle);
 		}
 		
 		glBindVertexArray(instancing ? default_instancing_vao : default_vao);
@@ -486,7 +490,9 @@ namespace Sparkles {
 		
 		glBindTexture(GL_TEXTURE_2D, 0);
 		
-		Texture* texture = new Texture; // #memory_cleanup
+		Texture_GL* texture = new Texture_GL; // #memory_cleanup
+		texture->width = width;
+		texture->height = height;
 		texture->handle = handle;
 		return texture;
 	}
@@ -497,7 +503,7 @@ namespace Sparkles {
 		glGenFramebuffers(1, &fbo);
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo); 
 		
-		auto color_attachment = texture_create(format, width, height, nullptr);
+		auto color_attachment = (Texture_GL*) texture_create(format, width, height, nullptr);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color_attachment->handle, 0);
 		
 		GLenum completion_status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -505,7 +511,9 @@ namespace Sparkles {
 		
 		glBindFramebuffer(GL_FRAMEBUFFER, 0); 
 		
-		RenderTarget* result = new RenderTarget;
+		RenderTarget_GL* result = new RenderTarget_GL;
+		result->width = width;
+		result->height = height;
 		result->fbo = fbo;
 		result->color_attachment = color_attachment;
 		return result;
@@ -513,12 +521,12 @@ namespace Sparkles {
 
 	Texture* render_target_flush(RenderTarget* render_target) {
 		// In OpenGL, we don't need to synchronize here, but that's not necessarily the case for other Graphics APIs.
-		return render_target->color_attachment;
+		return ((RenderTarget_GL*) render_target)->color_attachment;
 	}
 	
 	void render_target_clear(RenderTarget* render_target, vec4 color) {
 		if (render_target) {
-			glBindFramebuffer(GL_FRAMEBUFFER, render_target->fbo);
+			glBindFramebuffer(GL_FRAMEBUFFER, ((RenderTarget_GL*) render_target)->fbo);
 		} else {	
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		}

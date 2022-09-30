@@ -18,12 +18,8 @@ struct Example {
 void firework_init();
 void firework_frame(float dt);
 
-void waterfall_init();
-void waterfall_frame(float dt);
-
 const Example examples[] = {
 	{"Fireworks!", firework_init, firework_frame},
-	{"Waterfall!", waterfall_init, waterfall_frame},
 };
 
 int current_example_index = 0;
@@ -57,31 +53,27 @@ void do_frame() {
 		current_example.frame_function(global_time.dt);
 	}
 }
+void RangeEdit(const char* label, Sparkles::Range2* range);
 
-void ImGui::RandomEdit(const char* label, Sparkles::RandomScalar* scalar, float min, float max) {
+
+void ImGui::RangeEdit(const char* label, Sparkles::Range1* range, float min, float max) {
 	ImGui::Text(label);
 	ImGui::Indent();
-	ImGui::PushID(scalar);
-	ImGui::SliderFloat("Min", &scalar->min, min, max);
-	ImGui::SliderFloat("Max", &scalar->max, min, max);
+	ImGui::PushID(range);
+	ImGui::SliderFloat("Min", &range->min, min, max);
+	ImGui::SliderFloat("Max", &range->max, min, max);
 	ImGui::PopID();
 	ImGui::Unindent();
 }
 
 
-void ImGui::RandomEdit(const char* label, Sparkles::RandomColor* color) {	
-	vec4 color_min = {color->red.min, color->green.min, color->blue.min, color->alpha.min};
-	vec4 color_max = {color->red.max, color->green.max, color->blue.max, color->alpha.max};	
-	
+void ImGui::RangeEdit(const char* label, Sparkles::Range4* range) {
 	ImGui::Text(label);
 	ImGui::Indent();
 	
-	ImGui::PushID(color);
-	ImGui::ColorEdit4("Min", &color_min.x, ImGuiColorEditFlags_DisplayRGB);
-	// ImGui::SameLine();
-	ImGui::ColorEdit4("Max", &color_max.x, ImGuiColorEditFlags_DisplayRGB);
+	ImGui::PushID(range);
+	ImGui::ColorEdit4("Min", (float*) &range->min, ImGuiColorEditFlags_DisplayRGB);
+	ImGui::ColorEdit4("Max", (float*) &range->max, ImGuiColorEditFlags_DisplayRGB);
 	ImGui::PopID();
 	ImGui::Unindent();
-	
-	*color = uniform_rgba(color_min, color_max);	
 }

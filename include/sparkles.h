@@ -126,9 +126,18 @@ namespace Sparkles {
 	
 	// These structs are defined by the graphics backend.
 	struct Shader;
-	struct Texture;
-	struct Mesh; 
-	struct RenderTarget;
+	
+	struct Texture {
+		int width;
+		int height;
+	};
+	
+	struct Mesh;
+	
+	struct RenderTarget {
+		int width;
+		int height;
+	};
 	
 	struct RenderState {
 		Shader* vertex_shader = nullptr;

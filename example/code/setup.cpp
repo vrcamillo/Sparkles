@@ -40,14 +40,16 @@ int main() {
 	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
 	const GLFWvidmode* vidmode = glfwGetVideoMode(monitor);
 	
-	int window_width = (int) (vidmode->width * 3) / 4;
-	int window_height = (int) (vidmode->height * 3) / 4;
+	int window_width = (int) (vidmode->width);
+	int window_height = (int) (vidmode->height);
 	
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+	glfwWindowHint(GLFW_MAXIMIZED, true);
+	
 	global_window = glfwCreateWindow(window_width, window_height, "Sparkles!", nullptr, nullptr);
 	
-	{
+	if (false) {
 		// Centralize window.
 		int x = (vidmode->width - window_width) / 2;
 		int y = (vidmode->height - window_height) / 2;

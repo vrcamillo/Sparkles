@@ -18,11 +18,10 @@ struct TimeInfo {
 extern GLFWwindow* global_window;
 // extern TimeInfo global_time;
 
-namespace Sparkles {
-	struct Mesh;
-	struct RandomScalar;
-	struct RandomColor;
-}
+
+#include "sparkles.h"
+#include "sparkles_utils.h"
+
 extern Sparkles::Mesh* square_mesh;
 extern Sparkles::Mesh* circle_mesh;
 
@@ -31,6 +30,6 @@ extern Sparkles::Mesh* circle_mesh;
 // #define max(a, b) (a > b) ? (a) : (b)
 
 namespace ImGui {
-	void RandomEdit(const char* label, Sparkles::RandomScalar* scalar, float min, float max);
-	void RandomEdit(const char* label, Sparkles::RandomColor* color);
+	void RangeEdit(const char* label, Sparkles::Range1* range, float min, float max);
+	void RangeEdit(const char* label, Sparkles::Range4* range);
 }

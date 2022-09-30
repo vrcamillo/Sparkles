@@ -92,7 +92,7 @@ namespace Sparkles {
 		return result;
 	}
 	
-	float random_get_uniform() {
+	float random_get() {
 		
 		static bool first = true;
 		if (first) {
@@ -107,73 +107,93 @@ namespace Sparkles {
 		return result;
 	}
 	
-	float random_get(RandomScalar spec) {
-		switch (spec.distribution) {
-		  case Distribution::UNIFORM: return spec.min + random_get_uniform() * (spec.max - spec.min);
-		  default: assert(false);
-		}
-		
-		return 0;
+	float random_get1(Range1 range) {
+		float t = random_get();
+		return (1 - t) * range.min + t * range.max;
 	}
 	
-	vec2 random_get(RandomVec2 spec) {
-		switch (spec.coordinate_system) {
-		  case CoordinateSystem::RECTANGULAR: {
-				float x = random_get(spec.x);
-				float y = random_get(spec.y);
-				vec2 value = {x, y};
-				return value + spec.offset;
-			} break;
-			
-		  case CoordinateSystem::POLAR: {
-				float angle = random_get(spec.angle);
-				float radius = random_get(spec.radius);
-				vec2 value = {radius * (float) cos(angle), radius * (float) sin(angle)};
-				return value + spec.offset;
-			} break;
+	vec2 random_get2(Range2 range) {
+		float x = random_get1({range.min.x, range.max.x});
+		float y = random_get1({range.min.y, range.max.y});
+		
+		switch (range.coords) {
+		  case Coords2D::CARTESIAN: return {x, y};	
+		  case Coords2D::POLAR: {
+				float radius = x;
+				float angle = y;
+				return {radius * (float) cos(angle), radius * (float) sin(angle)};
+			}
 			
 		  default: assert(false);
 		}
 		
-		return {};
+		return {x, y};
 	}
 	
-	vec4 random_get(RandomColor spec) {
-		switch (spec.color_system) {
-		  case ColorSystem::RGB: {
-				float red   = random_get(spec.red);
-				float green = random_get(spec.green);
-				float blue  = random_get(spec.blue);
-				float alpha = random_get(spec.alpha);
+	vec3 random_get3(Range3 range) {
+		float x = random_get1({range.min.x, range.max.x});
+		float y = random_get1({range.min.y, range.max.y});
+		float z = random_get1({range.min.z, range.max.z});
+		
+		switch (range.coords) {
+		  case Coords3D::CARTESIAN: return {x, y, z};	
+		  case Coords3D::SPHERICAL: {
+				float radius  = x;
+				float polar   = y;
+				float azimuth = z;
 				
-				return {red, green, blue, alpha};
-			} break;
+				float sin_azimuth = sin(azimuth);
+				float cos_azimuth = cos(azimuth);
+				
+				return {
+					(float) (radius * sin_azimuth * cos(polar)), 
+					(float) (radius * sin_azimuth * sin(polar)), 
+					(float) (radius * cos_azimuth)
+				};
+			}
 			
-		  case ColorSystem::HSB:
-			assert(false); // #unimplemented
-			return {};
+		  case Coords3D::CYLINDRICAL: {
+				float radius = x;
+				float azimuth = y;
+				
+				return {
+					(float) (radius * cos(azimuth)),
+					(float) (radius * sin(azimuth)),
+					z
+				};
+			}
 			
 		  default: assert(false);
 		}
 		
-		return {};
+		return {x, y, z};
+	}
+	
+	vec4 random_get4(Range4 range) {
+		float x = random_get1({range.min.x, range.max.x});
+		float y = random_get1({range.min.y, range.max.y});
+		float z = random_get1({range.min.z, range.max.z});
+		float w = random_get1({range.min.w, range.max.w});
+		
+		return {x, y, z, w};
 	}
 	
 	
+	/*
 	void particle_simulate(Particle* p, ParticlePhysicsParams* physics, float dt) {
 		p->velocity += physics->gravity * dt;
 		p->position += p->velocity * dt;
 		p->velocity *= physics->friction; // #temporary: This should not be frame rate dependant!
 		p->life -= dt;
 	}
-	
+	*/
 	void particle_spawn(Particle* p, ParticleSpawnParams* spawn) {
-		p->position.xy = random_get(spawn->position);
+		p->position.xy = random_get2(spawn->position);
 		p->position.z = 0;
-		p->scale = random_get(spawn->scale);
-		p->color = random_get(spawn->color);
-		p->velocity.xy = random_get(spawn->velocity) * 0.2;
-		p->life = random_get(spawn->life);
+		p->scale = random_get1(spawn->scale);
+		p->color = random_get4(spawn->color);
+		p->velocity.xy = random_get2(spawn->velocity) * 0.2;
+		p->life = random_get1(spawn->life);
 	}
 
 	mat4 mat4_identity() {

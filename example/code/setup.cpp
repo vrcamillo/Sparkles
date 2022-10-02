@@ -34,22 +34,25 @@ extern unsigned int default_font_data[115744/4];
 bool initialize();
 void do_frame();
 
+constexpr float aspect_ratio = 16.0 / 9.0; // #hardcoded #temporary
+
 int main() {	
 	if (!glfwInit()) return 1;
 	
 	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
 	const GLFWvidmode* vidmode = glfwGetVideoMode(monitor);
 	
-	int window_width = (int) (vidmode->width * 0.75);
-	int window_height = (int) (vidmode->height * 0.75);
+	int window_height = (int) (vidmode->height * 0.9);
+	int window_width = (int) (window_height * aspect_ratio);
 	
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 	// glfwWindowHint(GLFW_MAXIMIZED, true);
+	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE); // #temporary
 	
 	global_window = glfwCreateWindow(window_width, window_height, "Sparkles!", nullptr, nullptr);
 	
-	if (false) {
+	{
 		// Centralize window.
 		int x = (vidmode->width - window_width) / 2;
 		int y = (vidmode->height - window_height) / 2;

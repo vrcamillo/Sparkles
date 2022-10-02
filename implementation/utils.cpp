@@ -317,4 +317,8 @@ namespace Sparkles {
 	}
 	
 	
+	vec2 polar(float radius, float angle) {
+		return {radius * (float) cos(angle), radius * (float) sin(angle)};
+	}
+	
 }

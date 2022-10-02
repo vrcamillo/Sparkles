@@ -22,8 +22,23 @@ extern GLFWwindow* global_window;
 #include "sparkles.h"
 #include "sparkles_utils.h"
 
+extern Sparkles::RenderTarget* hdr_render_target;
+extern Sparkles::RenderState hdr_blit_render_state;
+
+
+
+constexpr int NUM_MESH_PRESETS = 2;
 extern Sparkles::Mesh* square_mesh;
 extern Sparkles::Mesh* circle_mesh;
+extern Sparkles::Mesh* mesh_presets[NUM_MESH_PRESETS];
+extern const char* mesh_presets_names[NUM_MESH_PRESETS];
+
+constexpr int NUM_TEXTURE_PRESETS = 2; // number of textures + 1 null one.
+extern Sparkles::Texture* light_texture;
+extern Sparkles::Texture* texture_presets[NUM_TEXTURE_PRESETS];
+extern const char* texture_presets_names[NUM_TEXTURE_PRESETS];
+
+void notify_starvation(int count);
 
 // #temporary: Remove these.
 // #define min(a, b) (a < b) ? (a) : (b)

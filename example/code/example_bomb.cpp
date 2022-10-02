@@ -22,7 +22,7 @@ struct Params {
 	float fuse_burning_speed = 1;
 };
 
-Params params;
+static Params params;
 
 //
 // Simulation variables

@@ -19,8 +19,8 @@ struct Params {
 	vec2 gravity = {0, -4};
 	float friction = 0.98;
 	
-	Range2 spawn_offset = polar(0, 0, 0, TAU);
-	Range2 spawn_velocity = polar(0, 8, 0, TAU);
+	Range2 spawn_offset = range_polar(0, 0, 0, TAU);
+	Range2 spawn_velocity = range_polar(0, 8, 0, TAU);
 	Range1 size = {0.3, 0.7};
 	Range1 life = {0.5, 2};
 	
@@ -39,14 +39,7 @@ Params params;
 float explosion_accumulation_timer;
 float next_explosion_interval = -1;
 
-//
-// Graphics variables
-//
-RenderTarget* hdr_render_target;
-Texture* light_mask;
 RenderState particles_render_state;
-RenderState hdr_blit_render_state;
-
 
 void firework_init() {
 	system = particle_system_create(max_particle_count);
@@ -58,29 +51,10 @@ void firework_init() {
 		p->life = -1;
 	}
 	
-	{
-		//
-		// Initialize our graphics variables.
-		//
-		
-		// Create our HDR render target the same size as our backbuffer.
-		int backbuffer_width, backbuffer_height;
-		glfwGetFramebufferSize(global_window, &backbuffer_width, &backbuffer_height);
-		hdr_render_target = render_target_create(TextureFormat::RGBA_FLOAT16, backbuffer_width, backbuffer_height);
-		
-		// Create our light texture mask.
-		light_mask = texture_generate_light_mask(64, 64, 0.01, 10);
-		
-		particles_render_state.render_target = hdr_render_target;
-		particles_render_state.projection = orthographic(-8, +8, +5, -5, -1, +1);
-		particles_render_state.viewport = {0, 0, (float) hdr_render_target->width, (float) hdr_render_target->height};
-		particles_render_state.texture0 = light_mask;
-		
-		hdr_blit_render_state.projection = orthographic(-0.5f, +0.5f, +0.5f, -0.5f, -1, +1);;
-		hdr_blit_render_state.viewport = {0, 0, (float) backbuffer_width, (float) backbuffer_height};
-		hdr_blit_render_state.texture0 = nullptr; // Will be our HDR texture.
-		
-	}
+	particles_render_state.render_target = hdr_render_target;
+	particles_render_state.projection = orthographic(-8, +8, +5, -5, -1, +1);
+	particles_render_state.viewport = {0, 0, (float) hdr_render_target->width, (float) hdr_render_target->height};
+	particles_render_state.texture0 = light_texture;
 	
 }
 
@@ -195,7 +169,4 @@ void firework_frame(float dt) {
 	render_target_clear(hdr_render_target, {0, 0, 0, 1});
 	particle_system_upload_and_render(system, circle_mesh, &particles_render_state);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // #temporary: Reset default opengl state
-
-	hdr_blit_render_state.texture0 = render_target_flush(hdr_render_target);
-	mesh_render(square_mesh, &hdr_blit_render_state);
 }

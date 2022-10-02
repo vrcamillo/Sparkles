@@ -34,7 +34,7 @@ namespace Sparkles {
 		Coords2D coords = Coords2D::CARTESIAN;
 	};
 	
-	constexpr Range2 polar(float min_radius, float max_radius, float min_angle, float max_angle) {
+	constexpr Range2 range_polar(float min_radius, float max_radius, float min_angle, float max_angle) {
 		return {{min_radius, min_angle}, {max_radius, max_angle}, Coords2D::POLAR};
 	}
 	
@@ -169,6 +169,7 @@ namespace Sparkles {
 	vec3 lerp(vec3 a, vec3 b, float t);
 	vec4 lerp(vec4 a, vec4 b, float t);
 	
+	vec2 polar(float radius, float angle);
 	vec2 rotate2(vec2 v, float radians);
 	
 	vec2 bezier_get_position(CubicBezier curve, float t);

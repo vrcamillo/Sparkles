@@ -247,10 +247,12 @@ namespace Sparkles {
 		return sqrt(v.x * v.x + v.y * v.y);		
 	}
 
-	vec2 normalize(vec2 v) {
+	vec2 normalize(vec2 v, float epsilon) {
 		float length = norm(v);
-		v.x /= length;
-		v.y /= length;
+		if (length > epsilon) {
+			v.x /= length;
+			v.y /= length;
+		}
 		return v;
 	}
 	
@@ -316,6 +318,24 @@ namespace Sparkles {
 		};
 	}
 	
+	
+	mat4 mat4_translation(vec3 offset) {
+		return {
+			1, 0, 0, offset.x,
+			0, 1, 0, offset.y, 
+			0, 0, 1, offset.y,
+			0, 0, 0, 1,
+		};
+	}
+	
+	mat4 mat4_scale(float scale) {
+		return {
+			scale, 0, 0, 0,
+			0, scale, 0, 0, 
+			0, 0, scale, 0,
+			0, 0, 0, 1,
+		};
+	}
 	
 	vec2 polar(float radius, float angle) {
 		return {radius * (float) cos(angle), radius * (float) sin(angle)};

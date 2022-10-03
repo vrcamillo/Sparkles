@@ -163,7 +163,7 @@ namespace Sparkles {
 	
 	float norm(vec2 v);
 	
-	vec2 normalize(vec2 v);
+	vec2 normalize(vec2 v, float epsilon = 0.001);
 	
 	vec2 lerp(vec2 a, vec2 b, float t);
 	vec3 lerp(vec3 a, vec3 b, float t);
@@ -177,6 +177,8 @@ namespace Sparkles {
 	float bezier_get_length(CubicBezier curve, float start_t = 0, float end_t = 1, float dt = 0.01);
 	
 	mat4 mat4_identity();
-	mat4 orthographic(float left, float right, float top, float bottom, float near, float far);
+	mat4 mat4_translation(vec3 offset);
+	mat4 mat4_scale(float scale);
 	
+	mat4 orthographic(float left, float right, float top, float bottom, float near, float far);	
 }

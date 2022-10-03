@@ -34,10 +34,24 @@ struct Emitter {
 	vec4 colors[16];
 };
 
+enum class ForceType {
+	GRAVITATIONAL,	
+	ELASTIC,
+};
+
+static const char* force_type_names[] = {
+	"Gravitational (k/r^2)",
+	"Elastic (-kr)",
+};
+
 struct Attractor {
+	bool active;
+	
 	vec2 position;
+	ForceType force_type;
 	float radius;
-	float magnitude;
+	float factor;
+	float magnitude_cap;
 };
 
 struct Physics {
@@ -45,7 +59,7 @@ struct Physics {
 	float friction;
 	
 	int attractor_count;
-	Attractor attractors[16];
+	Attractor attractors[8];
 };
 
 struct SandboxState {
@@ -97,6 +111,16 @@ void physics_init(Physics* physics) {
 	physics->friction = 1;
 }
 
+void attractor_init(Attractor* attractor) {
+	memset(attractor, 0, sizeof(Attractor));
+	attractor->active = true;
+	attractor->position = {0, 0};
+	attractor->radius = 0.5;
+	attractor->factor = 1;	
+	attractor->force_type = ForceType::GRAVITATIONAL;
+	attractor->magnitude_cap = 10;
+}
+
 void sandbox_state_init(SandboxState* state) {
 	memset(state, 0, sizeof(SandboxState));
 	
@@ -110,6 +134,7 @@ void sandbox_state_init(SandboxState* state) {
 	state->emitter_count = 1;
 	emitter_init(&state->emitters[0]);
 }
+
 
 //
 //
@@ -142,31 +167,84 @@ void DragAngleRange2(const char* label, float* min_radians, float* max_radians, 
 	*max_radians = max_value_degrees * (TAU / 360.0);
 }
 
+
+template <typename T>
+void array_ordered_remove(int* array_count, T array[], int index_to_remove) {
+	for (int i = index_to_remove; i < *array_count - 1; i += 1) {
+		array[i] = array[i + 1];
+	}
+	*array_count -= 1;
+}
+
+constexpr ImVec4 add_color = ImVec4(0.1, 0.5, 0.1, 1);
+constexpr ImVec4 delete_color = ImVec4(0.8, 0.1, 0.1, 1);
+
+bool ColoredButton(ImVec4 color, const char* label) {
+	ImGui::PushStyleColor(ImGuiCol_Button, color);
+	bool result = ImGui::Button(label);
+	ImGui::PopStyleColor();
+	return result;
+}
+
+bool debug_view;
+
 void sandbox_panel() {
 	using namespace ImGui;
 	
 	SetNextWindowPos(ImVec2(0, 0));
 	Begin("Sandbox!", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-	
-	#if 0
-	if (TreeNodeEx("Globals", ImGuiTreeNodeFlags_DefaultOpen)) {
-		DragFloat("Space width", &state.space_width, 0.5, 1, 100); 
-		DragFloat("Space height", &state.space_height, 0.5, 1, 100); 
-		TreePop();
-	}
-	#endif
 
+	Checkbox("Debug visualization", &debug_view);
 	
 	if (TreeNodeEx("Physics", ImGuiTreeNodeFlags_DefaultOpen)) {
+		Physics* physics = &state.physics;
+		
 		static float gravity_angle = TAU * 0.75f;
 		static float gravity_magnitude = 1;
 		SliderAngle("Gravity angle", &gravity_angle, 0, 360);
 		SameLine(); if (Button("^")) gravity_angle = TAU * 0.25f;
 		SameLine(); if (Button("v")) gravity_angle = TAU * 0.75f;
 		SliderFloat("Gravity magnitude", &gravity_magnitude, 0, 20, "%.1f"); 		
-		state.physics.gravity = polar(gravity_magnitude, gravity_angle);
+		physics->gravity = polar(gravity_magnitude, gravity_angle);
 		
-		SliderFloat("Friction factor", &state.physics.friction, 0.8, 1, "%.3f", ImGuiSliderFlags_Logarithmic);
+		SliderFloat("Friction factor", &physics->friction, 0.8, 1, "%.3f", ImGuiSliderFlags_Logarithmic);
+		
+		int delete_attractor_index = -1;
+		for (int i = 0; i < physics->attractor_count; i += 1) {
+			Attractor* attractor = &physics->attractors[i];
+			
+			PushID(i);
+			
+			if (TreeNodeEx("Attractor", ImGuiTreeNodeFlags_DefaultOpen, "Attractor %d", i + 1)) {
+				
+				Checkbox("Active", &attractor->active);
+				SameLine();
+				if (ColoredButton(delete_color, "Delete")) delete_attractor_index = i;
+			
+				DragFloat2("Position (x, y)", &attractor->position.x, 0.05, -10, +10, "%.1f");
+				DragFloat("Influence radius", &attractor->radius, 0.05, 0, +20, "%.1f");
+				
+				Combo("Force type", (int*) &attractor->force_type, force_type_names, array_size(force_type_names));
+				DragFloat("Factor", &attractor->factor, 0.1, -100, +100, "%.1f");
+				DragFloat("Magnitude cap", &attractor->magnitude_cap, 0.1, 0, 100, "%.1f");
+				TreePop();
+			}
+			PopID();
+		}
+		
+		if (physics->attractor_count < array_size(physics->attractors)) {
+
+			if (ColoredButton(add_color, "+ New attractor")) {
+				if (physics->attractor_count > 0) {
+					physics->attractors[physics->attractor_count] = physics->attractors[physics->attractor_count - 1];
+				} else {
+					attractor_init(&physics->attractors[physics->attractor_count]);
+				}
+				physics->attractor_count += 1;
+			}
+		}
+		
+		if (delete_attractor_index >= 0) array_ordered_remove(&physics->attractor_count, physics->attractors, delete_attractor_index);
 		
 		TreePop();
 	}
@@ -182,12 +260,9 @@ void sandbox_panel() {
 			
 			if (s != 0) {
 				SameLine();
-				PushStyleColor(ImGuiCol_Button, (ImVec4)ImVec4(0.8, 0.1, 0.1, 1));
-				if (Button("Delete")) delete_emitter_index = s;
-				PopStyleColor();
+				if (ColoredButton(delete_color, "Delete")) delete_emitter_index = s;
 			}
 			
-			Separator();
 			ImGui::BulletText("Simulation");
 			
 			DragFloat2("Position (x, y)", &emitter->position.x, 0.05, -10, +10, "%.1f");
@@ -195,7 +270,6 @@ void sandbox_panel() {
 			DragFloatRange2("Emission period", &emitter->emission_interval.min, &emitter->emission_interval.max, 0.01, 0.05, 10, "min = %.2f s", "max = %.2f s", ImGuiSliderFlags_AlwaysClamp | ImGuiSliderFlags_Logarithmic);
 			DragFloatRange2("Particles per emission", &emitter->particles_per_emission.min, &emitter->particles_per_emission.max, 0.5, 0, system_particle_count, "min = %.0f", "max = %.0f", ImGuiSliderFlags_AlwaysClamp);
 			
-			Separator();
 			ImGui::BulletText("Visuals");
 			
 			Combo("Shape", &emitter->mesh_index, mesh_presets_names, NUM_MESH_PRESETS); 
@@ -210,29 +284,28 @@ void sandbox_panel() {
 				Text("Color %d", i + 1);
 				if (i != 0) {
 					SameLine();
-					if (Button(" - ")) delete_color_index = i;
+					if (ColoredButton(delete_color, " - ")) delete_color_index = i;
 				}
 				
 				PopID();
 			}
 			
-			if (emitter->color_count < array_size(emitter->colors) && Button("+ New color")) {
-				emitter->colors[emitter->color_count] = emitter->colors[emitter->color_count - 1];
-				emitter->color_count += 1;
-			}
-			
-			if (delete_color_index >= 0) {
-				for (int i = delete_color_index; i < emitter->color_count - 1; i += 1) {
-					emitter->colors[i] = emitter->colors[i + 1];
+			if (emitter->color_count < array_size(emitter->colors)) {
+				PushStyleColor(ImGuiCol_Button, add_color);
+				if (Button("+ New color")) {
+					emitter->colors[emitter->color_count] = emitter->colors[emitter->color_count - 1];
+					emitter->color_count += 1;
 				}
-				emitter->color_count -= 1;
+				PopStyleColor();
 			}
 			
+			if (delete_color_index >= 0) array_ordered_remove(&emitter->color_count, emitter->colors, delete_color_index);			
 			
-			Separator();
 			ImGui::BulletText("Particle");
 			
 			static_assert(sizeof(emitter->offset.coords) == sizeof(int));
+			Text("Offset coords: ");
+			SameLine();
 			RadioButton("Cartesian", (int*) &emitter->offset.coords, (int) Coords2D::CARTESIAN);
 			SameLine();
 			RadioButton("Polar", (int*) &emitter->offset.coords, (int) Coords2D::POLAR);
@@ -254,24 +327,20 @@ void sandbox_panel() {
 			DragFloatRange2("Size", &emitter->size.min, &emitter->size.max, 0.01, 0, 4, "min = %.2f", "max = %.2f", ImGuiSliderFlags_AlwaysClamp);
 			DragFloatRange2("Life", &emitter->life.min, &emitter->life.max, 0.05, 0, 20, "min = %.1f s", "max = %.1f s", ImGuiSliderFlags_AlwaysClamp | ImGuiSliderFlags_Logarithmic);
 			
-			
 			TreePop();	
 		}
 		
 		PopID();
 	}
 	
-	if (state.emitter_count < max_system_count && Button("+ New emitter")) {
-		state.emitters[state.emitter_count] = state.emitters[state.emitter_count - 1];
-		state.emitter_count += 1;
+	if (state.emitter_count < max_system_count) {
+		if (ColoredButton(add_color, "+ New emitter")) {
+			state.emitters[state.emitter_count] = state.emitters[state.emitter_count - 1];
+			state.emitter_count += 1;
+		}
 	}
 	
-	if (delete_emitter_index >= 0) {
-		for (int i = delete_emitter_index; i < state.emitter_count - 1; i += 1) {
-			state.emitters[i] = state.emitters[i + 1];
-		}
-		state.emitter_count -= 1;
-	}
+	if (delete_emitter_index >= 0) array_ordered_remove(&state.emitter_count, state.emitters, delete_emitter_index);
 	
 	End();
 }
@@ -328,10 +397,37 @@ void sandbox_frame(float dt) {
 			Particle* p = &system->particles[i];
 			
 			p->velocity.xy += physics.gravity * dt;
-			p->velocity *= physics.friction;
+			
+			// #speed: This is not the most optimal thing. 
+			for (int a = 0; a < physics.attractor_count; a += 1) {
+				Attractor attractor = physics.attractors[a];
+				if (!attractor.active) continue;
+				
+				vec2 delta = attractor.position - p->position.xy; // Points to attractor
+				float distance2 = norm2(delta);
+				float distance = sqrt(distance2);
+				vec2 direction = normalize(delta);
+				
+				vec2 force = {0, 0};
+				if (distance2 < attractor.radius * attractor.radius) {
+					switch (attractor.force_type) {
+					  case ForceType::GRAVITATIONAL: force = (attractor.factor / distance2) * direction; break;
+					  case ForceType::ELASTIC: force = (attractor.factor * distance) * direction; break; // direction is already inverted, so we don't need a minus sign.
+					}
+				}
+				
+				auto force_magnitude = norm(force);
+				if (force_magnitude > attractor.magnitude_cap) force *= attractor.magnitude_cap / force_magnitude;
+				
+				p->velocity.xy += force * dt;
+			}
+			
 			p->position += p->velocity * dt;
+			p->velocity *= physics.friction;
+			
 			p->life -= dt;
 			p->color.w = fmin(p->color.w, p->life);
+			
 			
 			if (p->life < 0) p->scale = 0;
 		}

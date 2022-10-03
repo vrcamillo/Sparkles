@@ -153,7 +153,7 @@ if exist !imgui_library! (
 	exit /b
 )
 
-set includes=!includes! /I"!glad_folder!\include"
+set includes=!includes! /I"!glad_folder!\include" /I"..\third_party"
 set source_files=!source_files! !glad_folder!\src\gl.c
 
 rem 

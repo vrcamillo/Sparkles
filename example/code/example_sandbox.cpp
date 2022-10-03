@@ -36,13 +36,15 @@ struct Emitter {
 };
 
 enum class ForceType {
-	GRAVITATIONAL,	
-	ELASTIC,
+	LINEAR,
+	INVERSE,
+	INVERSE_SQUARED,
 };
 
 static const char* force_type_names[] = {
-	"Gravitational (k/r^2)",
-	"Elastic (-kr)",
+	"Linear (kr)",
+	"Inverse (k/r)",
+	"Inverse squared (k/r^2)",
 };
 
 struct Attractor {
@@ -119,7 +121,7 @@ void attractor_init(Attractor* attractor) {
 	attractor->position = {0, 0};
 	attractor->radius = 0.5;
 	attractor->factor = 1;	
-	attractor->force_type = ForceType::GRAVITATIONAL;
+	attractor->force_type = ForceType::LINEAR;
 	attractor->magnitude_cap = 10;
 }
 
@@ -206,7 +208,7 @@ void sandbox_panel() {
 		SliderAngle("Gravity angle", &gravity_angle, 0, 360);
 		SameLine(); if (Button("^")) gravity_angle = TAU * 0.25f;
 		SameLine(); if (Button("v")) gravity_angle = TAU * 0.75f;
-		SliderFloat("Gravity magnitude", &gravity_magnitude, 0, 20, "%.1f"); 		
+		DragFloat("Gravity magnitude", &gravity_magnitude, 0.1, 0, 20, "%.1f"); 		
 		physics->gravity = polar(gravity_magnitude, gravity_angle);
 		
 		SliderFloat("Friction factor", &physics->friction, 0.8, 1, "%.3f", ImGuiSliderFlags_Logarithmic);
@@ -436,8 +438,9 @@ void sandbox_frame(float dt) {
 				vec2 force = {0, 0};
 				if (distance2 < attractor.radius * attractor.radius) {
 					switch (attractor.force_type) {
-					  case ForceType::GRAVITATIONAL: force = (attractor.factor / distance2) * direction; break;
-					  case ForceType::ELASTIC: force = (attractor.factor * distance) * direction; break; // direction is already inverted, so we don't need a minus sign.
+					  case ForceType::INVERSE_SQUARED: force = (attractor.factor / distance2) * direction; break;
+					  case ForceType::INVERSE: force = (attractor.factor / distance) * direction; break;
+					  case ForceType::LINEAR: force = (attractor.factor * distance) * direction; break; 
 					}
 				}
 				

@@ -35,12 +35,17 @@ You will to run the script from a developer console with Microsoft Build Tools i
 Check __[this link](https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line)__ for reference.
 
 (Right now, we only support Windows, but we will eventually support other platforms as well).
+<img src="/example/images/editor.gif"/>
 
-### Fireworks!
-
-<img src="/example/images/firework2.gif" height="500"/>
-
-In the near future, new examples will be added here.
+## Examples
+<div style="display: grid;">
+<img src="/example/images/firework1.gif" height="300"/>
+<img src="/example/images/firework2.gif" height="300"/>
+<img src="/example/images/fire.gif" height="300"/>
+<img src="/example/images/cold_fire.gif" height="300"/>
+<img src="/example/images/pulse1.gif" height="300"/>
+<img src="/example/images/pulse2.gif" height="300"/>
+</div>
 
 ## Roadmap
 

@@ -32,6 +32,7 @@ struct Emitter {
 	
 	int color_count;
 	vec4 colors[16];
+	float color_weights[16];
 };
 
 enum class ForceType {
@@ -104,6 +105,7 @@ void emitter_init(Emitter* emitter) {
 	
 	emitter->color_count = 1;
 	emitter->colors[0] = {1, 1, 1, 1};
+	emitter->color_weights[0] = 1;
 }
 
 void physics_init(Physics* physics) {
@@ -279,9 +281,14 @@ void sandbox_panel() {
 			for (int i = 0; i < emitter->color_count; i += 1) {
 				PushID(i);
 				
-				ColorEdit4("##palette", (float*) &emitter->colors[i], ImGuiColorEditFlags_Float/* | ImGuiColorEditFlags_NoInputs*/);
+				ColorEdit4("##palette", (float*) &emitter->colors[i], ImGuiColorEditFlags_Float | ImGuiColorEditFlags_NoInputs);
 				SameLine();
 				Text("Color %d", i + 1);
+				
+				SameLine();
+				SetNextItemWidth(100); 
+				DragFloat("", &emitter->color_weights[i], 0.05, 0, 5, "weight = %.1f");
+				
 				if (i != 0) {
 					SameLine();
 					if (ColoredButton(delete_color, " - ")) delete_color_index = i;
@@ -294,12 +301,17 @@ void sandbox_panel() {
 				PushStyleColor(ImGuiCol_Button, add_color);
 				if (Button("+ New color")) {
 					emitter->colors[emitter->color_count] = emitter->colors[emitter->color_count - 1];
+					emitter->color_weights[emitter->color_count] = 1;
 					emitter->color_count += 1;
 				}
 				PopStyleColor();
 			}
 			
-			if (delete_color_index >= 0) array_ordered_remove(&emitter->color_count, emitter->colors, delete_color_index);			
+			if (delete_color_index >= 0) {
+				array_ordered_remove(&emitter->color_count, emitter->colors, delete_color_index);	
+				emitter->color_count += 1; // #hack
+				array_ordered_remove(&emitter->color_count, emitter->color_weights, delete_color_index);
+			}
 			
 			ImGui::BulletText("Particle");
 			
@@ -376,13 +388,26 @@ void sandbox_frame(float dt) {
 					p->life = random_get1(emitter->life);
 					p->scale = random_get1(emitter->size);
 					
-					float color_number = emitter->color_count * random_get();
-					int color0_index = fmax((int) (color_number - 0.5), 0);
-					int color1_index = fmin((int) (color_number + 0.5), emitter->color_count - 1);
-					
-					float t = random_get();
-					p->color = (1 - t) * emitter->colors[color0_index] + t * emitter->colors[color1_index];
-					
+					{
+						// Choose color based on weights
+						float total = 0;
+						for (int i = 0; i < emitter->color_count; i += 1) total += emitter->color_weights[i];
+						
+						vec4 chosen_color = {};
+						
+						float random_number = total * random_get();
+						float cursor = 0;
+						for (int i = 0; i < emitter->color_count; i += 1) {
+							float weight = emitter->color_weights[i];
+							if (random_number < cursor + weight) {
+								chosen_color = emitter->colors[i];
+								break;
+							}
+							cursor += weight;
+						}
+						
+						p->color = chosen_color;
+					}
 					remaining_particles_to_spawn -= 1;
 				}
 			}

@@ -18,14 +18,11 @@ struct TimeInfo {
 extern GLFWwindow* global_window;
 // extern TimeInfo global_time;
 
-
 #include "sparkles.h"
 #include "sparkles_utils.h"
 
 extern Sparkles::RenderTarget* hdr_render_target;
 extern Sparkles::RenderState hdr_blit_render_state;
-
-
 
 constexpr int NUM_MESH_PRESETS = 2;
 extern Sparkles::Mesh* square_mesh;
@@ -33,8 +30,7 @@ extern Sparkles::Mesh* circle_mesh;
 extern Sparkles::Mesh* mesh_presets[NUM_MESH_PRESETS];
 extern const char* mesh_presets_names[NUM_MESH_PRESETS];
 
-constexpr int NUM_TEXTURE_PRESETS = 2; // number of textures + 1 null one.
-extern Sparkles::Texture* light_texture;
+constexpr int NUM_TEXTURE_PRESETS = 3 + 1; // number of textures + 1 null one.
 extern Sparkles::Texture* texture_presets[NUM_TEXTURE_PRESETS];
 extern const char* texture_presets_names[NUM_TEXTURE_PRESETS];
 

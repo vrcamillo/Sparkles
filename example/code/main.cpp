@@ -18,7 +18,9 @@ Texture* light_texture;
 Texture* texture_presets[NUM_TEXTURE_PRESETS];
 const char* texture_presets_names[NUM_TEXTURE_PRESETS] = {
 	"Blank",
-	"Radial Light (64x64)",
+	"Blurry Light",
+	"Sharp Light",
+	"Sharpest Light",
 };
 
 RenderTarget* hdr_render_target;
@@ -40,12 +42,11 @@ void sandbox_init();
 void sandbox_frame(float dt);
 
 const Example examples[] = {
-	{"Fireworks!", firework_init, firework_frame},
-	{"Bomb!", bomb_init, bomb_frame},
 	{"Sandbox!", sandbox_init, sandbox_frame},
+	{"Bomb!", bomb_init, bomb_frame},
 };
 
-int current_example_index = 2;
+int current_example_index = 0;
 
 bool initialize() {
 	Sparkles::initialize();
@@ -75,9 +76,10 @@ bool initialize() {
 	
 	{
 		// Create texture presets.
-		light_texture = texture_generate_light_mask(64, 64, 0.01, 10);
 		texture_presets[0] = nullptr;
-		texture_presets[1] = light_texture;
+		texture_presets[1] = texture_generate_light_mask(64, 64, 0.01, 1);
+		texture_presets[2] = texture_generate_light_mask(64, 64, 0.01, 5);
+		texture_presets[3] = texture_generate_light_mask(64, 64, 0.01, 10);
 	}
 	
 	// Initialize all examples.

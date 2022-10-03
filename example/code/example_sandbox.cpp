@@ -111,7 +111,7 @@ void emitter_init(Emitter* emitter) {
 }
 
 void physics_init(Physics* physics) {
-	physics->gravity = {0, 0};
+	physics->gravity = polar(0.001, -TAU * 0.25);	
 	physics->friction = 1;
 }
 
@@ -256,12 +256,16 @@ void sandbox_panel() {
 	if (TreeNodeEx("Physics", ImGuiTreeNodeFlags_DefaultOpen)) {
 		Physics* physics = &state.physics;
 		
-		static float gravity_angle = TAU * 0.75f;
-		static float gravity_magnitude = 1;
-		SliderAngle("Gravity angle", &gravity_angle, 0, 360);
+		static float gravity_angle;
+		static float gravity_magnitude;
+		
+		gravity_angle = atan2(physics->gravity.y, physics->gravity.x);
+		gravity_magnitude = norm(physics->gravity);
+		
+		SliderAngle("Gravity angle", &gravity_angle, -180, 180);
 		SameLine(); if (Button("^")) gravity_angle = TAU * 0.25f;
-		SameLine(); if (Button("v")) gravity_angle = TAU * 0.75f;
-		DragFloat("Gravity magnitude", &gravity_magnitude, 0.1, 0, 20, "%.1f"); 		
+		SameLine(); if (Button("v")) gravity_angle = -TAU * 0.25f;
+		DragFloat("Gravity magnitude", &gravity_magnitude, 0.1, 0.001, 20, "%.1f"); 		
 		physics->gravity = polar(gravity_magnitude, gravity_angle);
 		
 		SliderFloat("Friction factor", &physics->friction, 0.8, 1, "%.3f", ImGuiSliderFlags_Logarithmic);

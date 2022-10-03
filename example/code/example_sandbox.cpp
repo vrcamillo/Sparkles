@@ -144,7 +144,24 @@ void sandbox_state_init(SandboxState* state) {
 //
 //
 
+void drop_callback(GLFWwindow* window, int count, const char** paths) {
+	auto file = fopen(paths[0], "rb");
+	
+	if (file) {
+		fseek(file, 0, SEEK_END);
+		auto size = ftell(file);
+		fseek(file, 0, SEEK_SET);
+
+		if (size == sizeof(state)) {
+			fread(&state, sizeof(state), 1, file);
+		}
+	}
+	fclose(file);
+}
+
 void sandbox_init() {
+	glfwSetDropCallback(global_window, drop_callback);
+	
 	sandbox_state_init(&state);
 	
 	for (int s = 0; s < max_system_count; s += 1) {		
@@ -198,7 +215,43 @@ void sandbox_panel() {
 	SetNextWindowPos(ImVec2(0, 0));
 	Begin("Sandbox!", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
-	Checkbox("Debug visualization", &debug_view);
+	if (Button("Save state")) {
+		OpenPopup("Save state as...");
+	}
+	
+	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (BeginPopupModal("Save state as...", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+		
+		static char name[128];
+		
+		InputTextWithHint("##state_name", "Enter the file name here", name, sizeof(name));
+		
+		BeginDisabled(!strlen(name));
+		if (Button("Save")) {
+			char filename[256];
+			sprintf_s(filename, "%s.sparkles", name);
+			
+			auto file = fopen(filename, "wb");
+			if (file) {
+				fwrite(&state, 1, sizeof(state), file);
+			}
+			fclose(file);
+			
+			ImGui::CloseCurrentPopup();
+		}
+		EndDisabled();
+		
+		SameLine();
+		
+		if (Button("Cancel")) {
+			ImGui::CloseCurrentPopup();
+		}
+		
+		EndPopup();
+	}
+	
+	// Checkbox("Debug visualization", &debug_view);
 	
 	if (TreeNodeEx("Physics", ImGuiTreeNodeFlags_DefaultOpen)) {
 		Physics* physics = &state.physics;

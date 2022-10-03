@@ -220,6 +220,7 @@ void do_frame() {
 				
 				char filename[256];
 				sprintf_s(filename, "%s/%03d.png", record_state.name, i);
+				stbi_flip_vertically_on_write(1);
 				stbi_write_png(filename, small_width, small_height, 4, smaller_frame_data, 0);
 			}
 			

@@ -374,7 +374,7 @@ void sandbox_panel() {
 			
 			ImGui::BulletText("Particle");
 			
-			static_assert(sizeof(emitter->offset.coords) == sizeof(int));
+			static_assert(sizeof(emitter->offset.coords) == sizeof(int), "We assume coords is 4 bytes long, for ImGui reasons. If that should not be the case anymore, change the calls to RadioButton below.");
 			Text("Offset coords: ");
 			SameLine();
 			RadioButton("Cartesian", (int*) &emitter->offset.coords, (int) Coords2D::CARTESIAN);

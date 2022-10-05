@@ -104,7 +104,7 @@ namespace Sparkles {
 		};
 	};
 	
-	static_assert(sizeof(Vertex) == 9 * sizeof(float));
+	static_assert(sizeof(Vertex) == 9 * sizeof(float), "Wrong vertex size!");
 	
 	enum class ShaderLanguage {
 		GLSL,

@@ -13,10 +13,10 @@ constexpr int max_particle_count = 1000;
 
 struct Params {
 	CubicBezier fuse_curve = {
-		.p0 = {-5, -3},
-		.p1 = {+5, +3},
-		.c0 = {-3, -1},
-		.c1 = {+3, +1},
+		{-5, -3}, // p0
+		{+5, +3}, // p1
+		{-3, -1}, // c0
+		{+3, +1}, // c1
 	};
 	
 	float fuse_burning_speed = 1;

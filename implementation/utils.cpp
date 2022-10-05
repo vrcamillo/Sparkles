@@ -4,7 +4,7 @@
 #include <stdlib.h> // srand
 #include <time.h> // time
 
-// #include "sparkles.h"
+#include "sparkles.h"
 #include "sparkles_utils.h"
 
 namespace Sparkles {
@@ -23,7 +23,11 @@ namespace Sparkles {
 		SPARKLES_ASSERT(index_count < MAX_INDICES);
 		
 		// Center
-		vertices[0] = {.position = {0, 0, 0}, .color = {1, 1, 1, 1}, .uv = {0.5, 0.5}};
+		vertices[0] = {
+			0, 0, 0, 
+			1, 1, 1, 1, 
+			0.5, 0.5
+		};
 		
 		float dangle = (2.0f * PI) / (float) N;
 		
@@ -35,9 +39,9 @@ namespace Sparkles {
 			float y = 0.5f * sin(angle);
 			
 			vertices[i] = {
-				.position = {x, y, 0}, 
-				.color = {1, 1, 1, 1}, 
-				.uv = {x + 0.5f, y + 0.5f}
+				x, y, 0, 
+				1, 1, 1, 1, 
+				x + 0.5f, y + 0.5f
 			};
 		}
 		
@@ -56,10 +60,10 @@ namespace Sparkles {
 	
 	Mesh* mesh_generate_quad(vec2 p0, vec2 p1) {
 		Vertex vertices[4] = {
-			{.position = {p0.x, p0.y, 0}, .color = {1, 1, 1, 1}, .uv = {0, 0}},
-			{.position = {p1.x, p0.y, 0}, .color = {1, 1, 1, 1}, .uv = {1, 0}},
-			{.position = {p1.x, p1.y, 0}, .color = {1, 1, 1, 1}, .uv = {1, 1}},
-			{.position = {p0.x, p1.y, 0}, .color = {1, 1, 1, 1}, .uv = {0, 1}},
+			{p0.x, p0.y, 0, 1, 1, 1, 1, 0, 0},
+			{p1.x, p0.y, 0, 1, 1, 1, 1, 1, 0},
+			{p1.x, p1.y, 0, 1, 1, 1, 1, 1, 1},
+			{p0.x, p1.y, 0, 1, 1, 1, 1, 0, 1},
 		};
 		
 		uint32_t indices[6] = {
@@ -93,8 +97,8 @@ namespace Sparkles {
 			vec2 p0 = center + offset;
 			vec2 p1 = center - offset;
 
-			vertices[vertex_cursor + 0] = {.position = {p0.x, p0.y, 0}, .color = {1, 1, 1, 1}, .uv = {0, 0}};		
-			vertices[vertex_cursor + 1] = {.position = {p1.x, p1.y, 0}, .color = {1, 1, 1, 1}, .uv = {0, 0}};
+			vertices[vertex_cursor + 0] = {p0.x, p0.y, 0, 1, 1, 1, 1, 0, 0};		
+			vertices[vertex_cursor + 1] = {p1.x, p1.y, 0, 1, 1, 1, 1, 0, 0};
 			
 			if (i < number_of_points - 1) {
 				indices[index_cursor + 0] = vertex_cursor + 0;

@@ -14,6 +14,9 @@ extern TimeInfo global_time;
 
 #include <direct.h> // #hack for mkdir
 
+Mesh* immediate_mesh;
+MeshBuilder immediate_builder;
+
 Mesh* square_mesh;
 Mesh* circle_mesh;
 Mesh* mesh_presets[NUM_MESH_PRESETS];
@@ -85,9 +88,18 @@ bool initialize() {
 	}
 	
 	{
+		immediate_builder = mesh_builder_create(1024, 1024 * 3);
+		
 		// Create mesh presets.
-		square_mesh = mesh_generate_quad({-0.5, -0.5}, {+0.5, +0.5});
-		circle_mesh = mesh_generate_regular_polygon(20);
+		
+		put_rect(&immediate_builder, {-0.5f, -0.5f, 1.0f, 1.0f});
+		square_mesh = mesh_create(immediate_builder.vertex_cursor, immediate_builder.index_cursor, immediate_builder.vertices, immediate_builder.indices);
+		mesh_builder_clear(&immediate_builder);
+		
+		put_regular_polygon(&immediate_builder, {0, 0}, 0.5f, 20);
+		circle_mesh = mesh_create(immediate_builder.vertex_cursor, immediate_builder.index_cursor, immediate_builder.vertices, immediate_builder.indices);
+		mesh_builder_clear(&immediate_builder);
+		
 		mesh_presets[0] = square_mesh;
 		mesh_presets[1] = circle_mesh;
 	}

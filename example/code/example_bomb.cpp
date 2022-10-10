@@ -35,7 +35,7 @@ float consumed_fuse_t;
 Mesh* fuse_mesh;
 
 void bomb_init() {
-	fuse_mesh = mesh_generate_bezier(params.fuse_curve, 30, 0.1);
+	// fuse_mesh = mesh_generate_bezier(params.fuse_curve, 30, 0.1);
 }
 
 void bomb_frame(float dt) {

@@ -4,7 +4,7 @@
 
 #ifndef SPARKLES_ASSERT
 #include <assert.h>
-#define SPARKLES_ASSERT(condition) assert((condition));
+#define SPARKLES_ASSERT(condition, ...) assert((condition));
 #endif
 
 #ifndef SPARKLES_LOG
@@ -14,13 +14,9 @@
 
 namespace Sparkles {
 	
-#if SPARKLES_USER_MATH_TYPES
-	using vec2 = SPARKLES_USER_VEC2;
-	using vec3 = SPARKLES_USER_VEC3;
-	using vec4 = SPARKLES_USER_VEC4;
-	using mat4 = SPARKLES_USER_MAT4;
-	using Rect = SPARKLES_USER_RECT;
-#else
+	// Below, we define our basic math data structures. 
+	// Eventually we will provide macros to allow you, the user of this library, to use their own data structures.
+	
 	struct vec2 {
 		float x;
 		float y;
@@ -63,8 +59,10 @@ namespace Sparkles {
 		};
 	};
 	
-#endif
-	
+	//
+	// This is our general particle structure.
+	// All the fields here are avaliable to be changed in the CPU and used in the GPU shaders.
+	//
 	struct Particle {
 		vec3 position;
 		float scale;
@@ -125,6 +123,7 @@ namespace Sparkles {
 	};
 	
 	// These structs are defined by the graphics backend.
+	
 	struct Shader;
 	
 	struct Texture {
@@ -161,9 +160,9 @@ namespace Sparkles {
 	//
 	// Basic API
 	// 
-	bool initialize();
+	bool            initialize();
 	ParticleSystem* particle_system_create(uint32_t particle_count);
-	void particle_system_upload_and_render(ParticleSystem* system, Mesh* mesh, RenderState* render_state);
+	void            particle_system_upload_and_render(ParticleSystem* system, Mesh* mesh, RenderState* render_state);
 	
 	//
 	// Graphics Utility
@@ -180,14 +179,14 @@ namespace Sparkles {
 	
 	// Mesh
 	Mesh* mesh_create(uint32_t vertex_count, uint32_t index_count, Vertex vertices[] = nullptr, uint32_t indices[] = nullptr);
-	void mesh_upload(Mesh* mesh, uint32_t vertex_count, Vertex vertices[], uint32_t index_count, uint32_t indices[]);
-	void mesh_render(Mesh* mesh, RenderState* render_state);
+	void  mesh_upload(Mesh* mesh, uint32_t vertex_count, Vertex vertices[], uint32_t index_count, uint32_t indices[]);
+	void  mesh_render(Mesh* mesh, RenderState* render_state);
 	// #todo: mesh_destroy
 	
 	// Render target
 	RenderTarget* render_target_create(TextureFormat format, uint32_t width, uint32_t height);
-	Texture* render_target_flush(RenderTarget* render_target);
-	void render_target_clear(RenderTarget* render_target, vec4 color); // nullptr means clearing our window's backbuffer.
+	Texture*      render_target_flush(RenderTarget* render_target);
+	void          render_target_clear(RenderTarget* render_target, vec4 color); // nullptr means clearing our window's backbuffer.
 	
 	// #todo: render_target_destroy
 }

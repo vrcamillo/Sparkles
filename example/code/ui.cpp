@@ -11,6 +11,12 @@ bool path_just_dropped = false;
 bool load_dialog_open = false;
 bool save_dialog_open = false;
 
+bool draw_debug_view = false;
+bool draw_grid = true;
+
+int starvation_count;
+float starvation_timer = 0;
+
 // Some utility functions
 template <typename T>
 void array_ordered_remove(int* array_count, T array[], int index_to_remove) {
@@ -66,15 +72,17 @@ void sandbox_state_save(SandboxState* state, const char* file_path) {
 	}
 }
 
+void notify_starvation(int count) {
+	starvation_count += count;
+	if (starvation_count) starvation_timer = 1;
+}
 
 void drop_callback(GLFWwindow* window, int count, const char** paths) {
 	strcpy_s(dropped_path, paths[0]);
 	path_just_dropped = true;
 }
 
-void sandbox_ui(SandboxState* state) {
-	// the_state = state;
-	
+void sandbox_ui(SandboxState* state, float dt) {	
 	glfwSetDropCallback(the_window, drop_callback); // Used for loading files.
 	
 	//
@@ -87,7 +95,11 @@ void sandbox_ui(SandboxState* state) {
 	bool try_to_load = false;
 	bool try_to_save = false;
 	
+	ImVec2 menu_bar_size;
+	
 	if (BeginMainMenuBar()) {
+		menu_bar_size = GetWindowSize();
+		
 		if (BeginMenu("State")) {
 			try_to_reset = MenuItem("Reset", "Ctrl+N");
 			try_to_load  = MenuItem("Load", "Ctrl+O");
@@ -101,10 +113,13 @@ void sandbox_ui(SandboxState* state) {
 			EndMenu();
 		}
 		
-		// if (BeginMenu("View")) {
-		// MenuItem("Emitter editor", nullptr, &emitter_editor);
-		// EndMenu();
-		// }
+		if (BeginMenu("Debug view")) {
+			MenuItem("Enabled", nullptr, &draw_debug_view);
+			Separator();
+			
+			MenuItem("Grid", nullptr, &draw_grid, draw_debug_view);
+			EndMenu();
+		}
 		
 		EndMainMenuBar();
 	}
@@ -340,5 +355,56 @@ void sandbox_ui(SandboxState* state) {
 		if (delete_emitter_index >= 0) array_ordered_remove(&state->emitter_count, state->emitters, delete_emitter_index);
 		
 		End();
+	}
+	
+	//
+	// Info panel
+	// 
+	{
+		SetNextWindowPos(ImVec2(GetMainViewport()->Size.x, menu_bar_size.y), 0, ImVec2(1, 0));
+		Begin("Info", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar);
+		Text("FPS: %.0f", (1.0f / dt));
+		if (starvation_timer > 0) {
+			TextColored(ImVec4(0.9, 0.1, 0.1, 1), "There are too many particles! \nDecrease the emission rate!");
+		}
+		
+		starvation_timer -= dt;
+		starvation_timer = fmax(starvation_timer, 0);
+		starvation_count = 0;
+		End();
+	}
+	
+
+	if (draw_debug_view) {
+		int backbuffer_width, backbuffer_height;
+		glfwGetFramebufferSize(the_window, &backbuffer_width, &backbuffer_height);
+		
+		RenderState debug_render_state = {};
+		debug_render_state.projection = orthographic(-state->space_width * 0.5, +state->space_width * 0.5, +state->space_height * 0.5, -state->space_height * 0.5, -1, +1);
+		debug_render_state.viewport = {0, 0, (float) backbuffer_width, (float) backbuffer_height};
+		
+		if (draw_grid) {
+			constexpr vec4 grid_color = {1, 1, 1, 0.1};
+			constexpr float grid_width = 0.01f;
+			
+			auto x0 = -state->space_width * 0.5f;
+			auto x1 = +state->space_width * 0.5f;
+			auto y0 = -state->space_height * 0.5f;
+			auto y1 = +state->space_height * 0.5f;
+			
+			auto dx = (x1 - x0) / state->space_width;
+			for (int i = 0; i <= (int) state->space_width; i += 1) {
+				float x = x0 + dx * i;
+				immediate_line({x, y0}, {x, y1}, grid_width, grid_color);
+			}
+			
+			auto dy = (y1 - y0) / state->space_height;
+			for (int i = 0; i <= (int) state->space_height; i += 1) {
+				float y = y0 + dy * i;
+				immediate_line({x0, y}, {x1, y}, grid_width, grid_color);
+			}
+			
+			immediate_flush(&debug_render_state);
+		}	
 	}
 }

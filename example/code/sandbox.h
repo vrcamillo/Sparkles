@@ -116,3 +116,10 @@ void emitter_init(Emitter* emitter);
 void attractor_init(Attractor* attractor);
 void physics_init(Physics* physics);
 void sandbox_state_init(SandboxState* state);
+
+void  immediate_init();
+void  immediate_rect(Rect rect, vec4 color = {1, 1, 1, 1});
+void  immediate_regular_polygon(vec2 center, float radius, int number_of_sides);
+void  immediate_line(vec2 a, vec2 b, float line_width, vec4 color = {1, 1, 1, 1});
+Mesh* immediate_mesh();
+void  immediate_flush(RenderState* state);

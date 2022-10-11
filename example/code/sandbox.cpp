@@ -20,14 +20,7 @@ ParticleSystem* systems[max_emitter_count];
 float emission_accumulation_timer[max_emitter_count];
 float next_emission_interval[max_emitter_count];
 
-// Some forward declarations. 
-void  immediate_init();
-void  immediate_rect(Rect rect);
-void  immediate_regular_polygon(vec2 center, float radius, int number_of_sides);
-Mesh* immediate_mesh();
-void  immediate_flush(RenderState* state);
-
-void sandbox_ui(SandboxState* state);
+void sandbox_ui(SandboxState* state, float dt);
 
 bool sandbox_init() {
 	// Before creating any variable, we must initialize Sparkles. 
@@ -95,19 +88,11 @@ bool sandbox_init() {
 	return true;
 }
 
-int starvation_count;
-float starvation_timer = 0;
-
-void notify_starvation(int count) {
-	starvation_count += count;
-	if (starvation_count) starvation_timer = 1;
-}
+void notify_starvation(int count);
 
 void sandbox_frame(float dt) {
 	render_target_clear(nullptr, {0, 0, 0, 1});	
-	
-	sandbox_ui(&state);
-	
+		
 	RenderState render_state;
 	render_state.render_target = hdr_render_target;
 	render_state.projection = orthographic(-state.space_width * 0.5, +state.space_width * 0.5, +state.space_height * 0.5, -state.space_height * 0.5, -1, +1);
@@ -216,29 +201,7 @@ void sandbox_frame(float dt) {
 	immediate_rect({0, 0, 1, 1});
 	immediate_flush(&hdr_blit_render_state);
 	
-	/*
-	
-	
-	render_target_clear(hdr_render_target, {0, 0, 0, 1});
-	
-	starvation_count = 0;
-	
-	hdr_blit_render_state.texture0 = render_target_flush(hdr_render_target);
-	// mesh_render(square_mesh, &hdr_blit_render_state);	
-	
-	int display_w, display_h;
-	glfwGetFramebufferSize(the_window, &display_w, &display_h);
-	SetNextWindowPos(ImVec2(display_w, 0), 0, ImVec2(1, 0));
-	Begin("Info", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar);
-	Text("FPS: %.0f", (1.0f / dt));
-	if (starvation_timer > 0) {
-		TextColored(ImVec4(0.9, 0.1, 0.1, 1), "There are too many particles! \nDecrease the emission rate!");
-	}
-	
-	starvation_timer -= dt;
-	starvation_timer = fmax(starvation_timer, 0);
-	End();
-	*/
+	sandbox_ui(&state, dt);
 }
 
 void sandbox_state_init(SandboxState* state) {

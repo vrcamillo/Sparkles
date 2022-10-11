@@ -8,17 +8,17 @@ void immediate_init() {
 	the_mesh = mesh_create(the_builder.vertex_capacity, the_builder.index_capacity);
 }
 
-void immediate_rect(Rect rect) {		
+void immediate_rect(Rect rect, vec4 color) {		
 	float x0 = rect.x;
 	float x1 = rect.x + rect.w;
 	float y0 = rect.y;
 	float y1 = rect.y + rect.h;
 	
 	auto vertices = put_vertices(&the_builder, 4);
-	vertices[0] = {x0, y0, 0, 1, 1, 1, 1, 0, 0};
-	vertices[1] = {x1, y0, 0, 1, 1, 1, 1, 1, 0};
-	vertices[2] = {x1, y1, 0, 1, 1, 1, 1, 1, 1};
-	vertices[3] = {x0, y1, 0, 1, 1, 1, 1, 0, 1};
+	vertices[0] = {x0, y0, 0, color.x, color.y, color.z, color.w, 0, 0};
+	vertices[1] = {x1, y0, 0, color.x, color.y, color.z, color.w, 1, 0};
+	vertices[2] = {x1, y1, 0, color.x, color.y, color.z, color.w, 1, 1};
+	vertices[3] = {x0, y1, 0, color.x, color.y, color.z, color.w, 0, 1};
 	
 	put_indices(&the_builder, &vertices[0], 0, 1, 2);
 	put_indices(&the_builder, &vertices[0], 0, 2, 3);
@@ -59,6 +59,23 @@ void immediate_regular_polygon(vec2 center, float radius, int number_of_sides) {
 	}
 	
 	put_indices(&the_builder, &vertices[0], 0, number_of_sides, 1);
+}
+
+void immediate_line(vec2 a, vec2 b, float line_width, vec4 color) {
+	auto offset = normalize(rotate2(a - b, TAU * 0.25)) * line_width * 0.5;
+	vec2 p0 = a - offset;
+	vec2 p1 = a + offset;
+	vec2 p2 = b + offset;
+	vec2 p3 = b - offset;
+	
+	auto vertices = put_vertices(&the_builder, 4);
+	vertices[0] = {p0.x, p0.y, 0, color.x, color.y, color.z, color.w, 0, 0};
+	vertices[1] = {p1.x, p1.y, 0, color.x, color.y, color.z, color.w, 1, 0};
+	vertices[2] = {p2.x, p2.y, 0, color.x, color.y, color.z, color.w, 1, 1};
+	vertices[3] = {p3.x, p3.y, 0, color.x, color.y, color.z, color.w, 0, 1};
+	
+	put_indices(&the_builder, &vertices[0], 0, 1, 2);
+	put_indices(&the_builder, &vertices[0], 0, 2, 3);
 }
 
 void immediate_bezier(CubicBezier* curve, float line_width, int number_of_points) {

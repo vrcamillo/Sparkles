@@ -1,22 +1,7 @@
 #include "sandbox.h"
 
-// We provide a number of common geometries to render our particles, but you could use any shape you like.
-constexpr int NUM_MESH_PRESETS = 2;
 Mesh* mesh_presets[NUM_MESH_PRESETS];
-const char* mesh_presets_names[NUM_MESH_PRESETS] = {
-	"Square",
-	"Circle",
-};
-
-// We provide a number of common textures to render our particles, but you could use any texture you like.
-constexpr int NUM_TEXTURE_PRESETS = 4;
 Texture* texture_presets[NUM_TEXTURE_PRESETS];
-const char* texture_presets_names[NUM_TEXTURE_PRESETS] = {
-	"Blank",
-	"Blurry Light",
-	"Sharp Light",
-	"Sharpest Light",
-};
 
 // 
 // Graphics variables.

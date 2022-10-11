@@ -180,7 +180,7 @@ namespace Sparkles {
 	// Mesh
 	Mesh* mesh_create(uint32_t vertex_count, uint32_t index_count, Vertex vertices[] = nullptr, uint32_t indices[] = nullptr);
 	void  mesh_upload(Mesh* mesh, uint32_t vertex_count, Vertex vertices[], uint32_t index_count, uint32_t indices[]);
-	void  mesh_render(Mesh* mesh, RenderState* render_state);
+	void  mesh_render(Mesh* mesh, RenderState* render_state, int32_t index_count = -1);
 	// #todo: mesh_destroy
 	
 	// Render target

@@ -415,7 +415,9 @@ namespace Sparkles {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 	
-	void mesh_render(Mesh* mesh, RenderState* render_state) {
+	void mesh_render(Mesh* mesh, RenderState* render_state, int32_t index_count) {
+		if (index_count < 0) index_count = mesh->index_count;
+		
 		opengl_apply_render_state(render_state, false);
 		
 		// Bind the vertex format and mesh buffers
@@ -423,7 +425,7 @@ namespace Sparkles {
 		glBindVertexBuffer(0, mesh->vbo, 0, sizeof(Vertex));
 		
 		// Draw all particles in a single draw call.
-		glDrawElements(GL_TRIANGLES, mesh->index_count, GL_UNSIGNED_INT, (void*) 0);
+		glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, (void*) 0);
 		
 		opengl_reset_render_state();
 		
@@ -443,7 +445,6 @@ namespace Sparkles {
 		info.gl_swizzle[1] = GL_GREEN;
 		info.gl_swizzle[2] = GL_BLUE;
 		info.gl_swizzle[3] = GL_ALPHA;
-		
 		
 		switch (format) {
 		  case TextureFormat::RGBA_UINT8: {

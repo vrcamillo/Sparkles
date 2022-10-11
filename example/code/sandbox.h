@@ -5,6 +5,7 @@
 #include <stdio.h> // For printf
 #include <string.h> // For memset
 #include <math.h>
+#include <stdlib.h> // For _fullpath
 
 #define array_size(array) (sizeof(array) / sizeof(array[0]))
 
@@ -20,6 +21,22 @@ using namespace Sparkles;
 // 
 // Now, the actual particle data structures and constants.
 //
+
+// We provide a number of common geometries to render our particles, but you could use any shape you like.
+constexpr int NUM_MESH_PRESETS = 2;
+static const char* mesh_presets_names[NUM_MESH_PRESETS] = {
+	"Square",
+	"Circle",
+};
+
+// We provide a number of common textures to render our particles, but you could use any texture you like.
+constexpr int NUM_TEXTURE_PRESETS = 4;
+static const char* texture_presets_names[NUM_TEXTURE_PRESETS] = {
+	"Blank",
+	"Blurry Light",
+	"Sharp Light",
+	"Sharpest Light",
+};
 
 constexpr int max_particles_per_emitter = 5000; // Feel free to tweak this.
 

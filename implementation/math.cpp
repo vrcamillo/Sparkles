@@ -4,6 +4,15 @@ namespace Sparkles {
 	
 #if !SPARKLES_USER_MATH_TYPES
 	// vec2
+	
+	vec2 operator-(vec2 v) {
+		vec2 result;
+		result.x = -v.x;
+		result.y = -v.y;
+		return result;
+	}
+	
+	
 	vec2 operator+(vec2 a, vec2 b) {
 		vec2 result;
 		result.x = a.x + b.x;
@@ -342,6 +351,14 @@ namespace Sparkles {
 			0, 0, sz, tz,
 			0, 0, 0, 1,
 		};
+	}
+	
+	float smoothstep2(float t) {
+		return t * t * t * (t * (t * 6 - 15) + 10);
+	}
+	
+	float sign(float f) {
+		return (f < 0) ? -1 : (f > 0) ? +1 : 0;
 	}
 	
 }

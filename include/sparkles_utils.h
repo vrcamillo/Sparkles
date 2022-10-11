@@ -116,6 +116,8 @@ namespace Sparkles {
 	// Math operator overloads
 	
 	// vec2
+	vec2 operator-(vec2 v);
+	
 	vec2 operator+(vec2 a, vec2 b);
 	vec2 operator-(vec2 a, vec2 b);
 	vec2 operator*(vec2 a, vec2 b);
@@ -181,9 +183,13 @@ namespace Sparkles {
 	
 	vec2 normalize(vec2 v, float epsilon = 0.001);
 	
+	float lerp(float a, float b, float t);
 	vec2 lerp(vec2 a, vec2 b, float t);
 	vec3 lerp(vec3 a, vec3 b, float t);
 	vec4 lerp(vec4 a, vec4 b, float t);
+	
+	float sign(float f);
+	float smoothstep2(float t);
 	
 	vec2 polar(float radius, float angle);
 	vec2 rotate2(vec2 v, float radians);

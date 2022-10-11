@@ -246,6 +246,10 @@ namespace Sparkles {
 		return v;
 	}
 	
+	float lerp(float a, float b, float t) {
+		return (1 - t) * a + t * b;
+	}
+	
 	vec2 lerp(vec2 a, vec2 b, float t) {
 		return (1 - t) * a + t * b;
 	}

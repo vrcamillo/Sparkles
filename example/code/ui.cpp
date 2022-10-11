@@ -11,8 +11,10 @@ bool path_just_dropped = false;
 bool load_dialog_open = false;
 bool save_dialog_open = false;
 
-bool draw_debug_view = false;
+bool draw_debug_view = true;
 bool draw_grid = true;
+bool draw_positions = true;
+bool draw_force_fields = true;
 
 int starvation_count;
 float starvation_timer = 0;
@@ -116,8 +118,8 @@ void sandbox_ui(SandboxState* state, float dt) {
 		if (BeginMenu("Debug view")) {
 			MenuItem("Enabled", nullptr, &draw_debug_view);
 			Separator();
-			
 			MenuItem("Grid", nullptr, &draw_grid, draw_debug_view);
+			MenuItem("Positions", nullptr, &draw_positions, draw_debug_view);
 			EndMenu();
 		}
 		
@@ -402,9 +404,59 @@ void sandbox_ui(SandboxState* state, float dt) {
 			for (int i = 0; i <= (int) state->space_height; i += 1) {
 				float y = y0 + dy * i;
 				immediate_line({x0, y}, {x1, y}, grid_width, grid_color);
+			}			
+		}
+		
+		if (draw_positions) {
+			constexpr int emitter_sides = 5;
+			constexpr float emitter_radius = 0.1;
+			constexpr vec4 emitter_color = {0.1, 0.8, 0.8, 1};
+			
+			constexpr int attractor_sides = 30;
+			constexpr vec4 attractor_color = {0.8, 0.1, 0.1, 0.1};
+			
+			constexpr float attractor_arrows_per_unit_length = 1;
+			constexpr float attractor_arrows_size = 0.1;
+			constexpr vec4 attractor_arrows_color = {0.6, 0.0, 0.1, 1};
+			
+			float t = fmod(glfwGetTime() * 1.0f, 1.0f);
+			
+			for (int a = 0; a < state->physics.attractor_count; a += 1) {
+				auto attractor = &state->physics.attractors[a];
+				if (attractor->active) {
+					
+					int arrow_count = attractor_arrows_per_unit_length * (2 * PI * attractor->radius);
+					for (int i = 0; i < arrow_count; i += 1) {
+						float angle = TAU * (i / (float) arrow_count);
+						
+						vec2 outward_direction = polar(1, angle);
+						vec2 arrow_direction = sign(attractor->factor) * outward_direction;
+						
+						float movement_t = 1 - pow(1 - t, 5);
+						float r0 = 0.1;
+						float r1 = attractor->radius;
+						float r = attractor->factor > 0 ? lerp(r1, r0, movement_t) : lerp(r0, r1, movement_t);
+						
+						vec4 arrows_color = attractor_arrows_color;
+						arrows_color.w *= smoothstep2(1 - t);
+						immediate_arrow_head(attractor->position + -outward_direction * r, arrow_direction, attractor_arrows_size, arrows_color);
+					}
+					
+					immediate_regular_polygon(attractor->position, attractor->radius, attractor_sides, attractor_color);
+				}
 			}
 			
-			immediate_flush(&debug_render_state);
-		}	
+			for (int e = 0; e < state->emitter_count; e += 1) {
+				
+				auto emitter = &state->emitters[e];
+				if (emitter->active) {
+					
+					immediate_regular_polygon(emitter->position, emitter_radius, emitter_sides, emitter_color);
+					
+				}
+			}
+		}
+		
+		immediate_flush(&debug_render_state);
 	}
 }

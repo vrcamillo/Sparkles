@@ -71,9 +71,9 @@ struct Emitter {
 };
 
 enum class ForceType : uint32_t {
-	LINEAR,
-	INVERSE,
-	INVERSE_SQUARED,
+	LINEAR = 0,
+	INVERSE = 1,
+	INVERSE_SQUARED = 2,
 };
 
 static const char* force_type_names[] = {
@@ -119,7 +119,8 @@ void sandbox_state_init(SandboxState* state);
 
 void  immediate_init();
 void  immediate_rect(Rect rect, vec4 color = {1, 1, 1, 1});
-void  immediate_regular_polygon(vec2 center, float radius, int number_of_sides);
+void  immediate_regular_polygon(vec2 center, float radius, int number_of_sides, vec4 color = {1, 1, 1, 1});
 void  immediate_line(vec2 a, vec2 b, float line_width, vec4 color = {1, 1, 1, 1});
+void  immediate_arrow_head(vec2 position, vec2 direction, float radius, vec4 color = {1, 1, 1, 1});
 Mesh* immediate_mesh();
 void  immediate_flush(RenderState* state);

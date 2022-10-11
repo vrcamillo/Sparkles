@@ -1,0 +1,101 @@
+#pragma once
+
+// A bunch of utility headers and macros
+#include <inttypes.h> // Use proper type names, such as uint32_t, instead of unsigned long long.
+#include <stdio.h> // For printf
+#include <string.h> // For memset
+#include <math.h>
+
+#define array_size(array) (sizeof(array) / sizeof(array[0]))
+
+// We use GLFW for window management
+#include "GLFW/glfw3.h"
+extern GLFWwindow* the_window;
+
+// To use our library, just include these headers.
+#include "sparkles.h"
+#include "sparkles_utils.h"
+using namespace Sparkles;
+
+// 
+// Now, the actual particle data structures and constants.
+//
+
+constexpr int max_particles_per_emitter = 5000; // Feel free to tweak this.
+
+// To allow you to save your particle configurations, we provide a very simple serialization system.
+// Our sandbox state's raw memory is directly saved into or loaded from a binary file. For this reason, 
+// we do not store pointers or dynamic arrays into the structs below. Also, be aware that changing any field in these structs may invalidate our simple serialization format.
+
+constexpr int serialization_version = 1;
+constexpr int max_emitter_count = 8;
+constexpr int max_emitter_color_count = 16;
+constexpr int max_attractor_count = 8;
+
+struct Emitter {
+	bool active;
+	
+	vec2 position;
+	
+	Range1 emission_interval;
+	Range1 particles_per_emission;
+	
+	int mesh_index;
+	int texture_index;
+	
+	Range2 offset;
+	Range2 velocity;
+	Range1 size;
+	Range1 life;
+	
+	int32_t color_count;
+	vec4 colors[max_emitter_color_count];
+	float color_weights[max_emitter_color_count];
+};
+
+enum class ForceType : uint32_t {
+	LINEAR,
+	INVERSE,
+	INVERSE_SQUARED,
+};
+
+static const char* force_type_names[] = {
+	"Linear (kr)",
+	"Inverse (k/r)",
+	"Inverse squared (k/r^2)",
+};
+
+struct Attractor {
+	bool active;
+	
+	vec2 position;
+	ForceType force_type;
+	float radius;
+	float factor;
+	float magnitude_cap;
+};
+
+struct Physics {
+	vec2 gravity;
+	float friction;
+	
+	int32_t attractor_count;
+	Attractor attractors[max_attractor_count];
+};
+
+struct SandboxState {
+	uint32_t version;
+	
+	float space_width;
+	float space_height;
+	
+	Physics physics;
+	
+	int32_t emitter_count;
+	Emitter emitters[max_emitter_count];
+};
+
+void emitter_init(Emitter* emitter);
+void attractor_init(Attractor* attractor);
+void physics_init(Physics* physics);
+void sandbox_state_init(SandboxState* state);

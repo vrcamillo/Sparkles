@@ -75,18 +75,12 @@ void world_drag_point(SandboxState* state, vec2* position, float radius = 0.1, v
 	
 	auto window = GetCurrentWindow();
 	auto id = GetID(position);
-
-	Text("%f, %f", mouse_in_world.x, mouse_in_world.y);
-	Text("%f, %f", position->x, position->y);
-	
-	static vec2 screen_drag_start;
 	
 	if (norm(mouse_in_world - *position) <= radius) {
 		radius *= 1.2;
 		
 		if (!world_active_item && !IsAnyItemActive() && !IsAnyItemHovered() && IsMouseClicked(ImGuiMouseButton_Left)) {
 			world_active_item = id;
-			// drag_start = *position;
 		}
 	}
 	
@@ -98,8 +92,6 @@ void world_drag_point(SandboxState* state, vec2* position, float radius = 0.1, v
 		if (IsMouseDragging(ImGuiMouseButton_Left)) {
 			*position = mouse_in_world;
 		}
-		
-		Text("ACTIVE");
 	}
 	
 	PopID();

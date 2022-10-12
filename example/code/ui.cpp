@@ -1,7 +1,9 @@
 #include "sandbox.h"
 
 // We use ImGui for controlling particle simulation variables and visuals.
+#define IMGUI_USER_CONFIG "my_imgui_config.h"
 #include "imgui.h"
+#include "imgui_internal.h"
 using namespace ImGui;
 
 char dropped_path[1024];
@@ -47,17 +49,62 @@ bool ColoredButton(ImVec4 color, const char* label) {
 	return result;
 }
 
-void world_drag(vec2* vector, RenderState* render_state) {
-	PushID(vector);
-	InvisibleButton("dummy", ImVec2(100, 100));
-	if (IsItemActive() && IsMouseDragging(ImGuiMouseButton_Left)) {
-		auto screen_mouse = GetMousePos();
-		auto world_mouse = render_state->projection * vec4(screen_mouse.x, screen_mouse.y, 0, 1);
+
+vec2 world_to_screen(SandboxState* state, vec2 world_position) {
+	vec2 screen_size = GetMainViewport()->Size;
+	vec2 world_size = vec2(state->space_width, state->space_height);
+	vec2 normalized_device_position = world_position / world_size;
+	vec2 screen_position = ((normalized_device_position + vec2(1, 1)) / 2.0f) * screen_size;
+	return screen_position;
+}
+
+vec2 screen_to_world(SandboxState* state, vec2 screen_position) {
+	vec2 screen_size = GetMainViewport()->Size;
+	vec2 world_size = vec2(state->space_width, state->space_height);
+	vec2 normalized_device_position = (vec2(screen_position.x, screen_size.y - screen_position.y) - screen_size * 0.5f) / screen_size;
+	vec2 world_position = normalized_device_position * world_size;
+	return world_position;
+}
+
+ImGuiID world_active_item;
+
+void world_drag_point(SandboxState* state, vec2* position, float radius = 0.1, vec4 color = {1, 1, 1, 1}) {	
+	vec2 mouse_in_world = screen_to_world(state, GetMousePos());
+	
+	PushID("WorldDragPoint");
+	
+	auto window = GetCurrentWindow();
+	auto id = GetID(position);
+
+	Text("%f, %f", mouse_in_world.x, mouse_in_world.y);
+	Text("%f, %f", position->x, position->y);
+	
+	static vec2 screen_drag_start;
+	
+	if (norm(mouse_in_world - *position) <= radius) {
+		radius *= 1.2;
 		
-		
-		
+		if (!world_active_item && !IsAnyItemActive() && !IsAnyItemHovered() && IsMouseClicked(ImGuiMouseButton_Left)) {
+			world_active_item = id;
+			// drag_start = *position;
+		}
 	}
+	
+	if (world_active_item == id) {
+		if (!IsMouseDown(ImGuiMouseButton_Left)) {
+			world_active_item = 0;
+		}
+		
+		if (IsMouseDragging(ImGuiMouseButton_Left)) {
+			*position = mouse_in_world;
+		}
+		
+		Text("ACTIVE");
+	}
+	
 	PopID();
+	
+	immediate_regular_polygon(*position, radius, 20, color);
 }
 
 bool sandbox_state_load(SandboxState* state, const char* file_path) {
@@ -421,12 +468,11 @@ void sandbox_ui(SandboxState* state, float dt) {
 		}
 		
 		if (draw_positions) {
-			constexpr int emitter_sides = 5;
 			constexpr float emitter_radius = 0.1;
 			constexpr vec4 emitter_color = {0.1, 0.8, 0.8, 1};
 			
 			constexpr int attractor_sides = 30;
-			constexpr vec4 attractor_color = {0.8, 0.1, 0.1, 0.1};
+			constexpr vec4 attractor_color = {0.8, 0.1, 0.1, 1};
 			
 			constexpr float attractor_arrows_per_unit_length = 1;
 			constexpr float attractor_arrows_size = 0.1;
@@ -455,7 +501,9 @@ void sandbox_ui(SandboxState* state, float dt) {
 						immediate_arrow_head(attractor->position + -outward_direction * r, arrow_direction, attractor_arrows_size, arrows_color);
 					}
 					
-					immediate_regular_polygon(attractor->position, attractor->radius, attractor_sides, attractor_color);
+					world_drag_point(state, &attractor->position, 0.1, attractor_color);
+					
+					immediate_regular_polygon(attractor->position, attractor->radius, attractor_sides, vec4(attractor_color.xyz, 0.1));
 				}
 			}
 			
@@ -463,9 +511,7 @@ void sandbox_ui(SandboxState* state, float dt) {
 				
 				auto emitter = &state->emitters[e];
 				if (emitter->active) {
-					
-					immediate_regular_polygon(emitter->position, emitter_radius, emitter_sides, emitter_color);
-					
+					world_drag_point(state, &emitter->position, emitter_radius, emitter_color);
 				}
 			}
 		}

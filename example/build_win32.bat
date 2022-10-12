@@ -132,7 +132,7 @@ if not exist !imgui_library! (
 	)
 	
 	for %%f in (!imgui_source_files!) do ( 
- 	  cl /nologo /c /O2 /I"code" /I!imgui_folder! /I!glfw_folder!/include /D IMGUI_USER_CONFIG=\"my_imgui_config.h\" %%f /Fo"!imgui_build_folder!\%%~nf.obj"
+ 	  cl /nologo /c /O2 /I"code" /I!imgui_folder! /I!glfw_folder!/include /I"..\include" /D IMGUI_USER_CONFIG=\"my_imgui_config.h\" %%f /Fo"!imgui_build_folder!\%%~nf.obj"
 		if errorlevel 1 (
 			echo:
 			echo Compilation error! Stopping...

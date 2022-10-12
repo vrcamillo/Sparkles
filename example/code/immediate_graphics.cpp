@@ -15,10 +15,10 @@ void immediate_rect(Rect rect, vec4 color) {
 	float y1 = rect.y + rect.h;
 	
 	auto vertices = put_vertices(&the_builder, 4);
-	vertices[0] = {x0, y0, 0, color.x, color.y, color.z, color.w, 0, 0};
-	vertices[1] = {x1, y0, 0, color.x, color.y, color.z, color.w, 1, 0};
-	vertices[2] = {x1, y1, 0, color.x, color.y, color.z, color.w, 1, 1};
-	vertices[3] = {x0, y1, 0, color.x, color.y, color.z, color.w, 0, 1};
+	vertices[0] = {{x0, y0, 0}, color, {0, 0}};
+	vertices[1] = {{x1, y0, 0}, color, {1, 0}};
+	vertices[2] = {{x1, y1, 0}, color, {1, 1}};
+	vertices[3] = {{x0, y1, 0}, color, {0, 1}};
 	
 	put_indices(&the_builder, &vertices[0], 0, 1, 2);
 	put_indices(&the_builder, &vertices[0], 0, 2, 3);
@@ -31,7 +31,7 @@ void immediate_regular_polygon(vec2 center, float radius, int number_of_sides, v
 	auto vertices = put_vertices(&the_builder, vertex_count);
 	
 	// Center
-	vertices[0] = {center.x, center.y, 0, color.x, color.y, color.z, color.w, 0.5f, 0.5f};
+	vertices[0] = {{center, 0}, color, {0.5f, 0.5f}};
 	
 	// Generate one vertex per side
 	float dangle = (2.0f * PI) / (float) number_of_sides;
@@ -41,7 +41,7 @@ void immediate_regular_polygon(vec2 center, float radius, int number_of_sides, v
 		vec2 pos = center + direction * radius;
 		vec2 uv_center = {0.5f, 0.5f};
 		vec2 uv  = 0.5f * direction + uv_center;
-		vertices[i] = {pos.x, pos.y, 0, color.x, color.y, color.z, color.w, uv.x, uv.y};
+		vertices[i] = {{pos, 0}, color, uv};
 	}
 	
 	// Generate the indices for each triangle 
@@ -59,10 +59,10 @@ void immediate_line(vec2 a, vec2 b, float line_width, vec4 color) {
 	vec2 p3 = b - offset;
 	
 	auto vertices = put_vertices(&the_builder, 4);
-	vertices[0] = {p0.x, p0.y, 0, color.x, color.y, color.z, color.w, 0, 0};
-	vertices[1] = {p1.x, p1.y, 0, color.x, color.y, color.z, color.w, 1, 0};
-	vertices[2] = {p2.x, p2.y, 0, color.x, color.y, color.z, color.w, 1, 1};
-	vertices[3] = {p3.x, p3.y, 0, color.x, color.y, color.z, color.w, 0, 1};
+	vertices[0] = {{p0, 0}, color, {0, 0}};
+	vertices[1] = {{p1, 0}, color, {1, 0}};
+	vertices[2] = {{p2, 0}, color, {1, 1}};
+	vertices[3] = {{p3, 0}, color, {0, 1}};
 	
 	put_indices(&the_builder, &vertices[0], 0, 1, 2);
 	put_indices(&the_builder, &vertices[0], 0, 2, 3);
@@ -75,9 +75,9 @@ void immediate_arrow_head(vec2 position, vec2 direction, float radius, vec4 colo
 	auto p2 = position + rotate2(offset, -TAU * 0.333f);
 	
 	auto vertices = put_vertices(&the_builder, 3);
-	vertices[0] = {p0.x, p0.y, 0, color.x, color.y, color.z, color.w, 0, 0};
-	vertices[1] = {p1.x, p1.y, 0, color.x, color.y, color.z, color.w, 1, 0};
-	vertices[2] = {p2.x, p2.y, 0, color.x, color.y, color.z, color.w, 1, 1};
+	vertices[0] = {{p0, 0}, color, {}};
+	vertices[1] = {{p1, 0}, color, {}};
+	vertices[2] = {{p2, 0}, color, {}};
 	
 	put_indices(&the_builder, &vertices[0], 0, 1, 2);
 }
@@ -94,8 +94,8 @@ void immediate_bezier(CubicBezier* curve, float line_width, int number_of_points
 		vec2 p1 = center - offset;
 		
 		auto vertices = put_vertices(&the_builder, 2);
-		vertices[0] = {p0.x, p0.y, 0, 1, 1, 1, 1, 0, 0};		
-		vertices[1] = {p1.x, p1.y, 0, 1, 1, 1, 1, 0, 0};
+		vertices[0] = {{p0, 0}, {1, 1, 1, 1}, {}};		
+		vertices[1] = {{p1, 0}, {1, 1, 1, 1}, {}};
 		
 		if (i < number_of_points - 1) {
 			put_indices(&the_builder, vertices, 0, 1, 2);

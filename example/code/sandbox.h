@@ -68,6 +68,8 @@ struct Emitter {
 	int32_t color_count;
 	vec4 colors[max_emitter_color_count];
 	float color_weights[max_emitter_color_count];
+	
+	Emitter() {}
 };
 
 enum class ForceType : uint32_t {
@@ -90,6 +92,8 @@ struct Attractor {
 	float radius;
 	float factor;
 	float magnitude_cap;
+	
+	Attractor() {}
 };
 
 struct Physics {
@@ -98,6 +102,8 @@ struct Physics {
 	
 	int32_t attractor_count;
 	Attractor attractors[max_attractor_count];
+	
+	Physics() {}
 };
 
 struct SandboxState {
@@ -110,6 +116,8 @@ struct SandboxState {
 	
 	int32_t emitter_count;
 	Emitter emitters[max_emitter_count];
+	
+	SandboxState() {}	
 };
 
 void emitter_init(Emitter* emitter);

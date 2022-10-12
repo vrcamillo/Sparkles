@@ -47,6 +47,19 @@ bool ColoredButton(ImVec4 color, const char* label) {
 	return result;
 }
 
+void world_drag(vec2* vector, RenderState* render_state) {
+	PushID(vector);
+	InvisibleButton("dummy", ImVec2(100, 100));
+	if (IsItemActive() && IsMouseDragging(ImGuiMouseButton_Left)) {
+		auto screen_mouse = GetMousePos();
+		auto world_mouse = render_state->projection * vec4(screen_mouse.x, screen_mouse.y, 0, 1);
+		
+		
+		
+	}
+	PopID();
+}
+
 bool sandbox_state_load(SandboxState* state, const char* file_path) {
 	bool result = false;
 	

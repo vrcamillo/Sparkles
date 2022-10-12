@@ -20,6 +20,9 @@ namespace Sparkles {
 	struct vec2 {
 		float x;
 		float y;
+		
+		constexpr vec2() : x(0), y(0) {}
+		constexpr vec2(float x, float y) : x(x), y(y) {}
 	};
 	
 	union vec3 {
@@ -29,6 +32,10 @@ namespace Sparkles {
 			float z;
 		};
 		vec2 xy;
+		
+		constexpr vec3() : x(0), y(0), z(0) {}
+		constexpr vec3(float x, float y, float z) : x(x), y(y), z(z) {}
+		constexpr vec3(vec2 xy, float z) : x(xy.x), y(xy.y), z(z) {}
 	};
 	
 	union vec4 {
@@ -40,6 +47,11 @@ namespace Sparkles {
 		};
 		vec3 xyz;
 		vec2 xy;
+		
+		constexpr vec4() : x(0), y(0), z(0), w(0) {}
+		constexpr vec4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
+		constexpr vec4(vec2 xy, float z, float w) : x(xy.x), y(xy.y), z(z), w(w) {}
+		constexpr vec4(vec3 xyz, float w) : x(xyz.x), y(xyz.y), z(xyz.z), w(w) {}
 	};	
 	
 	union mat4 {
@@ -100,6 +112,10 @@ namespace Sparkles {
 			float u;
 			float v;
 		};
+		
+		constexpr Vertex() : x(0), y(0), z(0), r(0), g(0), b(0), a(0), u(0), v(0) {}
+		constexpr Vertex(vec3 position, vec4 color, vec2 uv) : position(position), color(color), uv(uv) {}
+		constexpr Vertex(float x, float y, float z, float r, float g, float b, float a, float u, float v) : x(x), y(y), z(z), r(r), g(g), b(b), a(a), u(u), v(v) {}
 	};
 	
 	static_assert(sizeof(Vertex) == 9 * sizeof(float), "Wrong vertex size!");

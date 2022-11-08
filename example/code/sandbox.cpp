@@ -134,6 +134,8 @@ void sandbox_frame(float dt) {
 	render_target_clear(hdr_render_target, {0, 0, 0, 1});
 	
 	Physics physics = state.physics;
+	
+	// For each emitter, spawn new particles, if it is time to do so.
 	for (int s = 0; s < state.emitter_count; s += 1) {
 		auto system = systems[s];
 		auto emitter = &state.emitters[s];
@@ -146,14 +148,15 @@ void sandbox_frame(float dt) {
 			for (int i = 0; i < system->count && remaining_particles_to_spawn > 0; i += 1) {
 				Particle* p = &system->particles[i];
 				
-				if (p->life < 0) {
+				if (p->life < 0) { // Spawn particles in the place of those that have already died.
+					
 					p->position.xy = emitter->position + random_get2(emitter->offset);
 					p->velocity.xy = random_get2(emitter->velocity);
 					p->life = random_get1(emitter->life);
 					p->scale = random_get1(emitter->size);
 					
 					{
-						// Choose color based on weights
+						// Choose color based on the color weights
 						float total = 0;
 						for (int i = 0; i < emitter->color_count; i += 1) total += emitter->color_weights[i];
 						
@@ -182,11 +185,16 @@ void sandbox_frame(float dt) {
 			emission_accumulation_timer[s] = 0;
 		}
 		
+		// Here is our simple simulation loop.
 		for (int i = 0; i < system->count; i += 1) {
 			Particle* p = &system->particles[i];
 			
+			if (p->life < 0) continue; // Do not simulate particles that have already died.
+			
+			// Apply gravity.
 			p->velocity.xy += physics.gravity * dt;
 			
+			// Apply force fields.
 			// #speed: This is not the most optimal thing. 
 			for (int a = 0; a < physics.attractor_count; a += 1) {
 				Attractor attractor = physics.attractors[a];
@@ -212,13 +220,19 @@ void sandbox_frame(float dt) {
 				p->velocity.xy += force * dt;
 			}
 			
+			// Integrate our position.
 			p->position += p->velocity * dt;
+			
+			// Apply friction.
 			p->velocity *= physics.friction;
 			
+			// Decrease the particle's life.
 			p->life -= dt;
+			
+			// Make the particles fade as they die. (A bit of a #hardcoded effect).
 			p->color.w = fmin(p->color.w, p->life);
 			
-			
+			// If the particle is dead, set its size to 0, so that it is never rendered.
 			if (p->life < 0) p->scale = 0;
 		}
 		

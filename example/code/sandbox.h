@@ -132,3 +132,6 @@ void  immediate_line(vec2 a, vec2 b, float line_width, vec4 color = {1, 1, 1, 1}
 void  immediate_arrow_head(vec2 position, vec2 direction, float radius, vec4 color = {1, 1, 1, 1});
 Mesh* immediate_mesh();
 void  immediate_flush(RenderState* state);
+
+bool sandbox_state_load(SandboxState* state, const char* file_path);
+void sandbox_state_save(SandboxState* state, const char* file_path);

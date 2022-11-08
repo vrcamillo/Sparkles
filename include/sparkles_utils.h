@@ -114,6 +114,7 @@ namespace Sparkles {
 	vec4 random_get4(Range4 range);
 	
 	// Math operator overloads
+
 	
 	// vec2
 	vec2 operator-(vec2 v);

@@ -193,3 +193,6 @@ if errorlevel 0 (
 ) else (
 	echo Error^^!
 )
+
+rem Copy the default sample (hardcoded to be firework1) to the build folder.
+copy /B samples\firework1.sparkles !build_folder!\default.sparkles

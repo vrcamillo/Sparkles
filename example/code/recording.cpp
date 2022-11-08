@@ -6,6 +6,8 @@
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include "stb_image_resize.h"
 
+// Disabled temporarily while the UI refactor is not done.
+
 #if 0
 struct RecordState {
 	bool recording;

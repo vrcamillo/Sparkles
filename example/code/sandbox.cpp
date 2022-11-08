@@ -22,6 +22,34 @@ float next_emission_interval[max_emitter_count];
 
 void sandbox_ui(SandboxState* state, float dt);
 
+bool sandbox_state_load(SandboxState* state, const char* file_path) {
+	bool result = false;
+	
+	auto file = fopen(file_path, "rb");
+	if (file) {
+		fseek(file, 0, SEEK_END);
+		auto size = ftell(file);
+		fseek(file, 0, SEEK_SET);
+		
+		if (size == sizeof(SandboxState)) {
+			fread(state, sizeof(SandboxState), 1, file);
+			result = true;
+		}
+		fclose(file);
+	}
+	
+	return result;
+}
+
+void sandbox_state_save(SandboxState* state, const char* file_path) {	
+	auto file = fopen(file_path, "wb");
+	if (file) {
+		fwrite(state, sizeof(SandboxState), 1, file);		
+		fclose(file);
+	}
+}
+
+
 bool sandbox_init() {
 	// Before creating any variable, we must initialize Sparkles. 
 	// (Maybe this we should get rid of this step to simplify the #api?)
@@ -84,7 +112,12 @@ bool sandbox_init() {
 			systems[e] = system;
 		}
 	}
-
+	
+	{
+		// Load default sample.
+		sandbox_state_load(&state, "default.sparkles");
+	}
+	
 	return true;
 }
 
@@ -209,8 +242,8 @@ void sandbox_state_init(SandboxState* state) {
 	
 	state->version = serialization_version;
 	
-	state->space_width = 16; // #harcoded
-	state->space_height = 9; // #harcoded
+	state->space_width = 16; // #hardcoded
+	state->space_height = 9; // #hardcoded
 	
 	physics_init(&state->physics);
 	

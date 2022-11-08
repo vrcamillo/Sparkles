@@ -1,10 +1,15 @@
 #include "sandbox.h"
 
+// #todo: We would like a better visualization tool for polar and rectangular vectors than 1d sliders.
+
 // We use ImGui for controlling particle simulation variables and visuals.
 #define IMGUI_USER_CONFIG "my_imgui_config.h"
 #include "imgui.h"
 #include "imgui_internal.h"
 using namespace ImGui;
+
+// These are global variables used by the UI. 
+// Eventually we may group them in a single struct.
 
 char dropped_path[1024];
 char name_to_save[128];
@@ -13,7 +18,7 @@ bool path_just_dropped = false;
 bool load_dialog_open = false;
 bool save_dialog_open = false;
 
-bool draw_debug_view = true;
+bool draw_debug_view = false;
 bool draw_grid = true;
 bool draw_positions = true;
 bool draw_force_fields = true;
@@ -73,7 +78,7 @@ void world_drag_point(SandboxState* state, vec2* position, float radius = 0.1, v
 	
 	PushID("WorldDragPoint");
 	
-	auto window = GetCurrentWindow();
+	// auto window = GetCurrentWindow();
 	auto id = GetID(position);
 	
 	if (norm(mouse_in_world - *position) <= radius) {
@@ -97,33 +102,6 @@ void world_drag_point(SandboxState* state, vec2* position, float radius = 0.1, v
 	PopID();
 	
 	immediate_regular_polygon(*position, radius, 20, color);
-}
-
-bool sandbox_state_load(SandboxState* state, const char* file_path) {
-	bool result = false;
-	
-	auto file = fopen(file_path, "rb");
-	if (file) {
-		fseek(file, 0, SEEK_END);
-		auto size = ftell(file);
-		fseek(file, 0, SEEK_SET);
-		
-		if (size == sizeof(SandboxState)) {
-			fread(state, sizeof(SandboxState), 1, file);
-			result = true;
-		}
-		fclose(file);
-	}
-	
-	return result;
-}
-
-void sandbox_state_save(SandboxState* state, const char* file_path) {	
-	auto file = fopen(file_path, "wb");
-	if (file) {
-		fwrite(state, sizeof(SandboxState), 1, file);		
-		fclose(file);
-	}
 }
 
 void notify_starvation(int count) {
@@ -159,11 +137,13 @@ void sandbox_ui(SandboxState* state, float dt) {
 			try_to_load  = MenuItem("Load", "Ctrl+O");
 			try_to_save  = MenuItem("Save", "Ctrl+S");
 			
+#if 0 // Disabled for now.
 			Separator();
 			
 			if (MenuItem("Record")) {
 				
 			}
+#endif
 			EndMenu();
 		}
 		

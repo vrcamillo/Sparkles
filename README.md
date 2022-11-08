@@ -11,6 +11,9 @@ Here's a sample code:
 using namespace Sparkles;
 
 // Initialization code
+Sparkles::initialize();
+
+// Create a particle system.
 int particle_count = 100;
 ParticleSystem* particle_system = particle_system_create(particle_count);
 
@@ -22,9 +25,9 @@ for (int i = 0; i < particle_system->count; i += 1) {
 }
 
 // Render code
-ShaderConstants my_shader_constants = /*...*/;
+RenderState my_render_state = /*...*/;
 Mesh* my_mesh = /*...*/;
-particle_system_upload_and_render(particle_system, my_mesh, &my_shader_constants);
+particle_system_upload_and_render(particle_system, my_mesh, &my_render_state);
 ```
 
 ## Showcase
@@ -35,9 +38,15 @@ You will to run the script from a developer console with Microsoft Build Tools i
 Check __[this link](https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line)__ for reference.
 
 (Right now, we only support Windows, but we will eventually support other platforms as well).
+
+In order to see the simulation code, take a look at ```examples\code\sandbox.cpp```. That's where most of the magic happens. 
+
 <img src="/example/images/editor.gif"/>
 
 ## Examples
+
+The following samples are located under ```examples\samples```.
+
 <div style="display: grid;">
 <img src="/example/images/firework1.gif" height="300"/>
 <img src="/example/images/firework2.gif" height="300"/>
@@ -51,7 +60,7 @@ Check __[this link](https://learn.microsoft.com/en-us/cpp/build/building-on-the-
 
 This demo is currently in development. 
 
-I plan to make it into a multi-platform library that supports other graphics APIs, such as D3D12 and Vulkan.  
+I plan to make it into a multi-platform library that supports other graphics APIs, such as D3D12 and Vulkan.
 
 ## License
 

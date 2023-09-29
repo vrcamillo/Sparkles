@@ -37,7 +37,7 @@ Open the ```example``` folder and run ```build_win32.bat``` to build our particl
 You will to run the script from a developer console with Microsoft Build Tools installed. 
 Check __[this link](https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line)__ for reference.
 
-(Right now, we only support Windows, but we will eventually support other platforms as well).
+(Right now, we only support Windows).
 
 In order to see the simulation code, take a look at ```examples\code\sandbox.cpp```. That's where most of the magic happens. 
 

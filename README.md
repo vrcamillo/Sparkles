@@ -1,5 +1,5 @@
 # Sparkles!
-A particle system library written in C++ and OpenGL.
+A particle system demo written in C++ and OpenGL.
 
 ## API
 
@@ -55,12 +55,6 @@ The following samples are located under ```examples\samples```.
 <img src="/example/images/pulse1.gif" height="300"/>
 <img src="/example/images/pulse2.gif" height="300"/>
 </div>
-
-## Roadmap
-
-This demo is currently in development. 
-
-I plan to make it into a multi-platform library that supports other graphics APIs, such as D3D12 and Vulkan.
 
 ## License
 
